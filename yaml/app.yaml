@@ -1,0 +1,25 @@
+apiVersion: dbman.hef.sh/v1alpha1
+kind: Database
+metadata:
+  name: mydb
+spec:
+  database_name: mydb
+  owner:
+    secret_key_ref:
+      key: username
+      name: db-credentials
+  password:
+    key: password
+    name: db-credentials
+  prune: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+stringData:
+  username: myuser
+  password: mypassword
+
+  
+    
