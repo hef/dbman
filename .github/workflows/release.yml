@@ -30,6 +30,9 @@ jobs:
           changelog-generator-opt: "emojis=true"
           allow-initial-development-versions: true
 
+      - name: get tag created in previous step
+        uses: actions/checkout@v3
+
       - name: Install cosign
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.1.1
@@ -74,6 +77,3 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
-
-    
