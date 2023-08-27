@@ -2,7 +2,8 @@ name: Docker
 
 on:
   push:
-    branches: [ "main" ]  
+    branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
 
@@ -29,9 +30,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-generator-opt: "emojis=true"
           allow-initial-development-versions: true
-
-      - name: get tag created in previous step
-        uses: actions/checkout@v3
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
