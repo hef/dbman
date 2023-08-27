@@ -6,6 +6,6 @@ COPY . /build
 RUN cargo build --bin controller 
 
 FROM scratch
-COPY --from=builder /build/target/release/controller /controller
+COPY --from=builder /build/target/*/controller /controller
 ENTRYPOINT ["/controller"]
 
