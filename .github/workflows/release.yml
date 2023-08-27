@@ -56,6 +56,15 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Determine cargo build mode
+        id: cargo-build-mode
+        run: |
+          if ${{ startsWith(github.ref, 'refs/tags/') }}; then
+            echo "cargo-build-args=--profile for-distribution"
+          else
+            echo "cargo-build-args=--release"
+          fi
       
       - name: Build and push
         id: build-and-push
@@ -66,6 +75,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            CARGO_BUILD_ARGS=${{ steps.cargo-build-mode.outputs.cargo-build-args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
