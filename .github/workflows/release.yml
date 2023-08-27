@@ -23,6 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - uses: go-semantic-release/action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install cosign
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.1.1
