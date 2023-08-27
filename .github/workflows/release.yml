@@ -61,9 +61,9 @@ jobs:
         id: cargo-build-mode
         run: |
           if ${{ startsWith(github.ref, 'refs/tags/') }}; then
-            echo "cargo-build-args=--profile for-distribution"
+            echo "cargo-build-args=--profile for-distribution" >> $GITHUB_OUTPUT
           else
-            echo "cargo-build-args=--release"
+            echo "cargo-build-args=--release" >> $GITHUB_OUTPUT
           fi
       
       - name: Build and push
