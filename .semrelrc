@@ -1,19 +1,19 @@
 {
-    "plugins": {
-      "commit-analyzer": {
-        "name": "default"
-      },
-      "ci-condition": {
-        "name": "default"
-      },
-      "changelog-generator": {
-        "name": "default",
-        "options": {
-          "emojis": "true"
-        }
-      },
-      "files-updater": {
-        "names": ["helm"]
+  "plugins": {
+    "commit-analyzer": {
+      "name": "default"
+    },
+    "ci-condition": {
+      "name": "default"
+    },
+    "changelog-generator": {
+      "name": "default",
+      "options": {
+        "emojis": "true"
+      }
+    },
+    "files-updater": {
+      "names": ["helm"]
     }
   }
 }

@@ -29,6 +29,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-generator-opt: "emojis=true"
           allow-initial-development-versions: true
+          update-file: charts/dbman/Chart.yaml
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
