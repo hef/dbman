@@ -13,8 +13,7 @@
         }
       },
       "provider": {
-        "name": "default",
-      },
-      
+        "name": "default"
+      }
     }
   }
