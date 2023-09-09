@@ -11,9 +11,6 @@
         "options": {
           "emojis": "true"
         }
-      },
-      "provider": {
-        "name": "default"
       }
     }
   }
