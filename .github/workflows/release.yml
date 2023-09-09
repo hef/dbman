@@ -1,4 +1,4 @@
-name: Docker
+name: Release
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
+            {{ steps.semantic.outputs.tags }}
 
       - name: Determine cargo build mode
         id: cargo-build-mode
