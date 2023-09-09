@@ -1,5 +1,9 @@
-dbman
-=====
+# dbman
+
+## installing with help
+```
+helm install oci://ghcr.io/hef/dbman/dbman
+```
 
 Create and drop databases for postgres in kubernetes.
 
