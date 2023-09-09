@@ -13,7 +13,10 @@
       }
     },
     "files-updater": {
-      "names": ["helm"]
+      "names": ["helm"],
+      "options": {
+        "helm_update_appversion": "true"
+      }
     }
   }
 }
