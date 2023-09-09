@@ -11,6 +11,9 @@
         "options": {
           "emojis": "true"
         }
-      }
+      },
+      "files-updater": {
+        "names": ["helm"]
     }
   }
+}
