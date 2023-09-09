@@ -1,18 +1,25 @@
 use crate::{dbc::Dbc, Error, Result};
-use k8s_openapi::api::core::v1::{ConfigMap, Secret};
+use k8s_openapi::{
+    api::core::v1::{ConfigMap, Secret},
+    chrono::{DateTime, Utc},
+};
 use log::{error, warn};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use futures::StreamExt;
 use kube::{
     api::ListParams,
     runtime::{
         controller::Action,
+        events::{Event, EventType, Recorder, Reporter},
         finalizer::{finalizer, Event as Finalizer},
         watcher::Config,
         Controller,
     },
-    Api, Client, CustomResource, ResourceExt,
+    Api, Client, CustomResource, Resource, ResourceExt,
 };
 use log::info;
 use schemars::JsonSchema;
@@ -60,6 +67,7 @@ pub struct DatasbaseStatus {}
 pub struct Context {
     client: Client,
     conn_string: String,
+    diagnostics: Arc<RwLock<Diagnostics>>,
 }
 
 impl Context {
@@ -185,20 +193,55 @@ impl Database {
     async fn reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
         let dbc = ctx.dbc().await?;
         let client = ctx.client.clone();
+        let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
 
         let owner = self.get_owner(&client).await?;
 
         if !dbc.does_user_exist(&owner).await? {
             let password = self.get_password(&client).await?;
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "CreatingUser".into(),
+                    note: Some(format!("Creating user `{owner}`")),
+                    action: "Creating User".into(),
+                    secondary: None,
+                })
+                .await?;
             dbc.create_user(&owner).await?;
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "UpdatingPassword".into(),
+                    note: Some(format!("Updating password for `{owner}`")),
+                    action: "Updating Password".into(),
+                    secondary: None,
+                })
+                .await?;
             dbc.update_password(&owner, &password).await?;
         }
 
-        if !dbc.does_database_exist(&self.spec.database_name).await? {
+        let database_name = &self.spec.database_name;
+        if !dbc.does_database_exist(database_name).await? {
             let owner = self.get_owner(&client).await?;
-            dbc.create_database(owner.as_ref(), &self.spec.database_name)
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "CreatingDatabase".into(),
+                    note: Some(format!("Creating database `{database_name}`")),
+                    action: "Creating Database".into(),
+                    secondary: None,
+                })
                 .await?;
-            dbc.grant_all_privileges_on_database_to_user(&self.spec.database_name, &owner)
+            dbc.create_database(owner.as_ref(), database_name).await?;
+            recorder.publish(Event {
+                type_: EventType::Normal,
+                reason: "GrantingPrivileges".into(),
+                note: Some(format!("Granting privileges on database `{database_name}` to `{owner}`")),
+                action: "Granting Privileges".into(),
+                secondary: None,
+            }).await?;
+            dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
                 .await?;
         }
 
@@ -207,19 +250,59 @@ impl Database {
 
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action> {
         let dbc = ctx.dbc().await?;
+        let client = ctx.client.clone();
+        let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         if self.spec.prune.unwrap_or(true) {
-            dbc.drop_database(self.spec.database_name.as_ref()).await?;
-
+            let database_name = &self.spec.database_name;
+            recorder.publish(Event {
+                type_: EventType::Normal,
+                reason: "DroppingDatabase".into(),
+                note: Some(format!("Dropping database `{database_name}`")),
+                action: "Dropping Database".into(),
+                secondary: None,
+            }).await?;
+            dbc.drop_database(database_name).await?;
             let owner = self.get_owner(&ctx.client).await?;
+            recorder.publish( Event {
+                type_: EventType::Normal,
+                reason: "DroppingUser".into(),
+                note: Some(format!("Dropping user `{owner}`")),
+                action: "Dropping User".into(),
+                secondary: None,
+            }).await?;
             dbc.drop_user(owner.as_ref()).await?;
         }
         Ok(Action::await_change())
     }
 }
 
+#[derive(Clone, Serialize)]
+pub struct Diagnostics {
+    #[serde(deserialize_with = "from_ts")]
+    pub last_event: DateTime<Utc>,
+    #[serde(skip)]
+    pub reporter: Reporter,
+}
+
+impl Default for Diagnostics {
+    fn default() -> Self {
+        Self {
+            last_event: Utc::now(),
+            reporter: "dbman".into(),
+        }
+    }
+}
+
+impl Diagnostics {
+    fn recorder(&self, client: Client, db: &Database) -> Recorder {
+        Recorder::new(client, self.reporter.clone(), db.object_ref(&()))
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct State {
     pub conn_string: String,
+    pub diangostics: Arc<RwLock<Diagnostics>>,
 }
 
 impl State {
@@ -227,6 +310,7 @@ impl State {
         Arc::new(Context {
             client,
             conn_string: self.conn_string.clone(),
+            diagnostics: self.diangostics.clone(),
         })
     }
 }
@@ -249,4 +333,3 @@ pub async fn run(state: State) -> Result<(), Error> {
         .await;
     Ok(())
 }
-

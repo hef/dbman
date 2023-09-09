@@ -7,7 +7,7 @@ use log::info;
 struct Args {
     #[clap(long, env)]
     host: String,
-    #[clap(short, long, env="POSTGRES_USER")]
+    #[clap(short, long, env = "POSTGRES_USER")]
     username: String,
     #[clap(short, long, env)]
     password: String,
@@ -25,8 +25,8 @@ async fn main() -> Result<(), controller::Error> {
             "host={} user={} password={}",
             args.host, args.username, args.password
         ),
+        ..Default::default()
     };
-
 
     controller::run(state).await
 }

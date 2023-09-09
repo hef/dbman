@@ -3,6 +3,9 @@
 #![warn(clippy::todo)]
 #![warn(clippy::panic)]
 pub mod controller;
+
+use std::sync::RwLockReadGuard;
+
 pub use crate::controller::*;
 
 use thiserror::Error;
@@ -17,6 +20,9 @@ pub enum Error {
 
     #[error("Tokio Postgres Error: {0}")]
     TokioPostgresError(#[source] Box<tokio_postgres::Error>),
+
+    #[error("Error acquring lock")]
+    LockError(String),
 
     #[error("Do not specify both secret and config map on {0}/{1}")]
     DoNotSpecifyBothSecretAndConfigMap(String, String),
@@ -46,6 +52,12 @@ impl From<kube::Error> for Error {
 impl From<tokio_postgres::Error> for Error {
     fn from(e: tokio_postgres::Error) -> Self {
         Self::TokioPostgresError(Box::new(e))
+    }
+}
+
+impl From<std::sync::PoisonError<RwLockReadGuard<'_, Diagnostics>>> for Error {
+    fn from(e: std::sync::PoisonError<RwLockReadGuard<Diagnostics>>) -> Self {
+        Self::LockError(e.to_string())
     }
 }
 

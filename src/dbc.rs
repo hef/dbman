@@ -1,5 +1,5 @@
 use log::info;
-use postgres_protocol::escape::{escape_literal, escape_identifier};
+use postgres_protocol::escape::{escape_identifier, escape_literal};
 use tokio_postgres::{Client, NoTls};
 
 pub struct Dbc {
@@ -100,7 +100,10 @@ impl Dbc {
     pub async fn drop_database(&self, database: &str) -> Result<(), tokio_postgres::Error> {
         info!("Dropping database {}", database);
         self.client
-            .execute(&format!("drop database {}", escape_identifier(database)), &[])
+            .execute(
+                &format!("drop database {}", escape_identifier(database)),
+                &[],
+            )
             .await?;
         Ok(())
     }
@@ -112,7 +115,8 @@ impl Dbc {
     ) -> Result<(), tokio_postgres::Error> {
         info!(
             "Granting all privileges on database {} to user {}",
-            database, user);
+            database, user
+        );
         self.client
             .execute(
                 &format!(
