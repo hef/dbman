@@ -59,7 +59,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=raw,value={{ steps.semantic.outputs.version }}
+            type=raw,value=${{ steps.semantic.outputs.version }},enabled=${{ steps.semantic.outputs.version != '' }}
 
       - name: Determine cargo build mode
         id: cargo-build-mode
