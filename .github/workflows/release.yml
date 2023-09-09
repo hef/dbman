@@ -64,7 +64,7 @@ jobs:
       - name: Determine cargo build mode
         id: cargo-build-mode
         run: |
-          if ${{ startsWith(github.ref, 'refs/tags/') }}; then
+          if ${{ steps.semantic.outputs.version != '' }}; then
             echo "cargo-build-args=--profile for-distribution" >> $GITHUB_OUTPUT
           else
             echo "cargo-build-args=--release" >> $GITHUB_OUTPUT
