@@ -5,9 +5,7 @@ metadata:
   labels:
     {{- include "dbman.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "dbman.selectorLabels" . | nindent 6 }}
