@@ -95,6 +95,6 @@ jobs:
           username: ${{ github.repository }}
           access-token: ${{ secrets.GITHUB_TOKEN }}
           force: true
-          chart-folder: chart
+          chart-folder: charts
 
       
