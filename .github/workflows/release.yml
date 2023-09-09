@@ -56,6 +56,10 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
 
       - name: Determine cargo build mode
         id: cargo-build-mode
@@ -95,6 +99,6 @@ jobs:
           username: ${{ github.repository }}
           access-token: ${{ secrets.GITHUB_TOKEN }}
           force: true
-          chart-folder: charts
+          chart-folder: charts/dbman
 
       
