@@ -15,7 +15,8 @@
     "files-updater": {
       "names": ["helm"],
       "options": {
-        "helm_update_appversion": "true"
+        "helm_update_appversion": "true",
+        "helm_appversion_template": "%s"
       }
     }
   }
