@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dbman-clusterrolebinding
+subjects:
+- kind: ServiceAccount
+  name: {{ template "dbman.serviceAccountName" .}}
+  namespace: {{ .Release.Namespace }}
+- roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: {{ template "dbman.fullname" . }}
