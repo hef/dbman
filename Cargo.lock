@@ -349,6 +349,7 @@ dependencies = [
 name = "dbman"
 version = "0.0.0"
 dependencies = [
+ "base64 0.21.2",
  "clap",
  "env_logger",
  "futures",

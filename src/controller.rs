@@ -1,6 +1,6 @@
 use crate::{dbc::Dbc, Error, Result};
 use k8s_openapi::{
-    api::core::v1::{ConfigMap, Secret},
+    api::core::v1::Secret,
     chrono::{DateTime, Utc},
 };
 use log::{error, warn};
@@ -31,49 +31,46 @@ pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 #[kube(
     group = "dbman.hef.sh",
     version = "v1alpha1",
+    kind = "DatabaseServer",
+    plural = "databaseservers",
+    namespaced
+)]
+pub struct DatabaseServerSpec {
+    pub conn_string: String,
+    pub superuser_secret: String,
+}
+
+#[derive(CustomResource, Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
+#[kube(
+    group = "dbman.hef.sh",
+    version = "v1alpha2",
     kind = "Database",
     plural = "databases",
     namespaced
 )]
 pub struct DatabaseSpec {
+    pub database_server_ref: DatabaseServerRef,
     pub database_name: String,
-    pub owner: OwnerSource,
-    pub password: SecretKeySelector,
+    pub credentials_secret: String,
     /// should we delete the database when the resource is deleted? Default true
     pub prune: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-pub struct OwnerSource {
-    pub config_map_key_ref: Option<ConfigMapKeySelector>,
-    pub secret_key_ref: Option<SecretKeySelector>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-pub struct SecretKeySelector {
+pub struct DatabaseServerRef {
     pub name: String,
-    pub key: String,
+    pub namespace: Option<String>,
 }
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-pub struct ConfigMapKeySelector {
-    pub name: String,
-    pub key: String,
-}
-
 pub struct DatasbaseStatus {}
 
 #[derive(Clone)]
 pub struct Context {
     client: Client,
-    conn_string: String,
     diagnostics: Arc<RwLock<Diagnostics>>,
 }
 
 impl Context {
-    async fn dbc(&self) -> Result<Dbc, tokio_postgres::Error> {
-        Dbc::new(&self.conn_string).await
-    }
+
 }
 
 async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
@@ -99,106 +96,78 @@ fn error_policy(_database: Arc<Database>, error: &Error, _ctx: Arc<Context>) -> 
 }
 
 impl Database {
-    async fn get_owner(&self, client: &Client) -> Result<String, Error> {
-        let namespace = self
-            .namespace()
-            .ok_or(Error::MissingNamespace(self.name_any()))?;
-        if self.spec.owner.config_map_key_ref.is_some() && self.spec.owner.secret_key_ref.is_some()
-        {
-            return Err(Error::DoNotSpecifyBothSecretAndConfigMap(
-                namespace,
-                self.name_any(),
-            ));
-        } else if let Some(config_map_key_selector) = self.spec.owner.config_map_key_ref.as_ref() {
-            let config_map_name = config_map_key_selector.name.as_ref();
-            let config_map_key: &str = config_map_key_selector.key.as_ref();
-            let config_map = Api::<ConfigMap>::namespaced(client.clone(), &namespace)
-                .get(config_map_name)
-                .await?;
-            let owner = config_map
-                .data
-                .as_ref()
-                .ok_or(Error::ConfigMapMissingKey(
-                    config_map.name_any(),
-                    config_map_key.to_owned(),
-                ))?
-                .get(config_map_key)
-                .ok_or(Error::ConfigMapMissingKey(
-                    config_map.name_any(),
-                    config_map_key.to_owned(),
-                ))?
-                .clone();
-            return Ok(owner);
-        } else if let Some(secret_key_ref) = self.spec.owner.secret_key_ref.as_ref() {
-            let secret_name = secret_key_ref.name.as_ref();
-            let secret_key: &str = secret_key_ref.key.as_ref();
-            let secret = Api::<Secret>::namespaced(client.clone(), &namespace)
-                .get(secret_name)
-                .await?;
+    async fn dbc(&self, client: &Client) -> Result<Dbc> {
 
-            let owner = String::from_utf8(
-                secret
-                    .data
-                    .as_ref()
-                    .ok_or(Error::SecretMissingKey(
-                        secret_name.to_owned(),
-                        secret_key.to_owned(),
-                    ))?
-                    .get(secret_key)
-                    .ok_or(Error::SecretMissingKey(
-                        secret_name.to_owned(),
-                        secret_key.to_owned(),
-                    ))?
-                    .0
-                    .clone(),
-            )
-            .map_err(|_| {
-                Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), secret_key.to_owned())
-            })?;
-            return Ok(owner);
-        }
-        Err(Error::SpecifyAtLeastOneSecretOrConfigMap)
+        //todo:
+        let database_server_namespace = self
+            .spec
+            .database_server_ref
+            .namespace.as_ref().or(self.namespace().as_ref()).ok_or(Error::MissingNamespace(self.name_any()))?.to_owned();
+        
+
+
+        let api: Api<DatabaseServer> = Api::namespaced(client.clone(), &database_server_namespace);
+        let dbs = api.get(&self.spec.database_server_ref.name).await?;
+        let dbc = Dbc::new(&dbs.spec.conn_string).await?;
+        Ok(dbc)
     }
-
-    async fn get_password(&self, client: &Client) -> Result<String, Error> {
+    async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
         let namespace = self
             .namespace()
             .ok_or(Error::MissingNamespace(self.name_any()))?;
-        let secret_name = self.spec.password.name.as_ref();
-        let secret_key: &str = self.spec.password.key.as_ref();
+        let secret_name = self.spec.credentials_secret.as_ref();
         let secret = Api::<Secret>::namespaced(client.clone(), &namespace)
             .get(secret_name)
             .await?;
+
+        let username = String::from_utf8(
+            secret
+                .data
+                .as_ref()
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "username".to_owned(),
+                ))?
+                .get("username")
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "username".to_owned(),
+                ))?
+                .0
+                .clone(),
+        )
+        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
+
         let password = String::from_utf8(
             secret
                 .data
                 .as_ref()
                 .ok_or(Error::SecretMissingKey(
                     secret_name.to_owned(),
-                    secret_key.to_owned(),
+                    "password".to_owned(),
                 ))?
-                .get(secret_key)
+                .get("password")
                 .ok_or(Error::SecretMissingKey(
                     secret_name.to_owned(),
-                    secret_key.to_owned(),
+                    "password".to_owned(),
                 ))?
                 .0
                 .clone(),
         )
-        .map_err(|_| {
-            Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), secret_key.to_owned())
-        })?;
-        Ok(password)
+        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
+
+        Ok((username, password))
     }
+
     async fn reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
-        let dbc = ctx.dbc().await?;
+        
         let client = ctx.client.clone();
+        let dbc = self.dbc(&client).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
 
-        let owner = self.get_owner(&client).await?;
+        let (owner, password) = self.get_credentials(&client).await?;
 
         if !dbc.does_user_exist(&owner).await? {
-            let password = self.get_password(&client).await?;
             recorder
                 .publish(Event {
                     type_: EventType::Normal,
@@ -223,7 +192,6 @@ impl Database {
 
         let database_name = &self.spec.database_name;
         if !dbc.does_database_exist(database_name).await? {
-            let owner = self.get_owner(&client).await?;
             recorder
                 .publish(Event {
                     type_: EventType::Normal,
@@ -234,13 +202,17 @@ impl Database {
                 })
                 .await?;
             dbc.create_database(owner.as_ref(), database_name).await?;
-            recorder.publish(Event {
-                type_: EventType::Normal,
-                reason: "GrantingPrivileges".into(),
-                note: Some(format!("Granting privileges on database `{database_name}` to `{owner}`")),
-                action: "Granting Privileges".into(),
-                secondary: None,
-            }).await?;
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "GrantingPrivileges".into(),
+                    note: Some(format!(
+                        "Granting privileges on database `{database_name}` to `{owner}`"
+                    )),
+                    action: "Granting Privileges".into(),
+                    secondary: None,
+                })
+                .await?;
             dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
                 .await?;
         }
@@ -249,27 +221,31 @@ impl Database {
     }
 
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action> {
-        let dbc = ctx.dbc().await?;
         let client = ctx.client.clone();
+        let dbc = self.dbc(&client).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         if self.spec.prune.unwrap_or(true) {
             let database_name = &self.spec.database_name;
-            recorder.publish(Event {
-                type_: EventType::Normal,
-                reason: "DroppingDatabase".into(),
-                note: Some(format!("Dropping database `{database_name}`")),
-                action: "Dropping Database".into(),
-                secondary: None,
-            }).await?;
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "DroppingDatabase".into(),
+                    note: Some(format!("Dropping database `{database_name}`")),
+                    action: "Dropping Database".into(),
+                    secondary: None,
+                })
+                .await?;
             dbc.drop_database(database_name).await?;
-            let owner = self.get_owner(&ctx.client).await?;
-            recorder.publish( Event {
-                type_: EventType::Normal,
-                reason: "DroppingUser".into(),
-                note: Some(format!("Dropping user `{owner}`")),
-                action: "Dropping User".into(),
-                secondary: None,
-            }).await?;
+            let (owner, _) = self.get_credentials(&ctx.client).await?;
+            recorder
+                .publish(Event {
+                    type_: EventType::Normal,
+                    reason: "DroppingUser".into(),
+                    note: Some(format!("Dropping user `{owner}`")),
+                    action: "Dropping User".into(),
+                    secondary: None,
+                })
+                .await?;
             dbc.drop_user(owner.as_ref()).await?;
         }
         Ok(Action::await_change())
@@ -301,7 +277,6 @@ impl Diagnostics {
 
 #[derive(Clone, Default)]
 pub struct State {
-    pub conn_string: String,
     pub diangostics: Arc<RwLock<Diagnostics>>,
 }
 
@@ -309,7 +284,6 @@ impl State {
     pub fn to_context(&self, client: Client) -> Arc<Context> {
         Arc::new(Context {
             client,
-            conn_string: self.conn_string.clone(),
             diagnostics: self.diangostics.clone(),
         })
     }
