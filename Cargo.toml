@@ -35,7 +35,7 @@ serde_yaml = "0.9.25"
 thiserror = "1.0.48"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 tokio-postgres = "0.7.10"
-base64 = { version = "0.21.2", features = [] }
+base64 = { version = "0.21.4", features = [] }
 
 
 
