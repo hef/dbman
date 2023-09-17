@@ -38,8 +38,8 @@ tokio-postgres = "0.7.10"
 
 [profile.for-distribution]
 inherits = "release"
-lto=true
-codegen-units=1
+#lto=true
+#codegen-units=1
 #opt-level = "s"
-strip = true
-panic = "abort"
+#strip = true
+#panic = "abort"
