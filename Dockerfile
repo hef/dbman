@@ -1,16 +1,18 @@
 ARG CARGO_BUILD_ARGS="--release"
-FROM docker.io/library/rust:1.72-alpine as builder
-RUN apk add --no-cache musl-dev
-WORKDIR /build
-COPY Cargo.toml Cargo.lock /build/
-RUN mkdir src && echo "fn main() {println!(\"if you see this, the build broke\")}" > src/main.rs
-RUN touch src/lib.rs
-RUN cargo build --bin controller $CARGO_BUILD_ARGS
-RUN rm -rf src target
-COPY . /build
-RUN cargo build --bin controller $CARGO_BUILD_ARGS
+FROM lukemathwalker/cargo-chef:latest-rust-1.72-alpine AS chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook $CARGO_BUILD_ARGS --recipe-path recipe.json
+COPY . .
+RUN cargo build $CARGO_BUILD_ARGS --bin controller
 
 FROM scratch
-COPY --from=builder /build/target/*/controller /controller
+COPY --from=builder /app/target/*/controller /controller
 ENTRYPOINT ["/controller"]
 
