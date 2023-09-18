@@ -69,9 +69,7 @@ pub struct Context {
     diagnostics: Arc<RwLock<Diagnostics>>,
 }
 
-impl Context {
-
-}
+impl Context {}
 
 async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     let ns = db
@@ -97,14 +95,15 @@ fn error_policy(_database: Arc<Database>, error: &Error, _ctx: Arc<Context>) -> 
 
 impl Database {
     async fn dbc(&self, client: &Client) -> Result<Dbc> {
-
         //todo:
         let database_server_namespace = self
             .spec
             .database_server_ref
-            .namespace.as_ref().or(self.namespace().as_ref()).ok_or(Error::MissingNamespace(self.name_any()))?.to_owned();
-        
-
+            .namespace
+            .as_ref()
+            .or(self.namespace().as_ref())
+            .ok_or(Error::MissingNamespace(self.name_any()))?
+            .to_owned();
 
         let api: Api<DatabaseServer> = Api::namespaced(client.clone(), &database_server_namespace);
         let dbs = api.get(&self.spec.database_server_ref.name).await?;
@@ -160,7 +159,6 @@ impl Database {
     }
 
     async fn reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
-        
         let client = ctx.client.clone();
         let dbc = self.dbc(&client).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
@@ -281,8 +279,8 @@ pub struct State {
 }
 
 impl State {
-    pub async fn diagnostics(&self) -> Diagnostics {
-        self.diagnostics.read().unwrap().clone()
+    pub fn diagnostics(&self) -> Result<Diagnostics> {
+        Ok(self.diagnostics.read()?.clone())
     }
     pub fn to_context(&self, client: Client) -> Arc<Context> {
         Arc::new(Context {

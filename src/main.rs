@@ -1,33 +1,33 @@
-use actix_web::{HttpServer, App, middleware::Logger, web::{self, Data}, get, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    get, middleware::Logger, web::Data, App, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use clap::Parser;
 use controller::State;
 use log::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
-struct Args {
-    
-}
+struct Args {}
 
 #[get("/healthz")]
-async fn healthz(_c: Data<State>, _req: HttpRequest ) -> impl Responder {
+async fn healthz(_c: Data<State>, _req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json("healthy")
 }
 
 #[get("/readyz")]
-async fn readyz(_c: Data<State>, _req: HttpRequest ) -> impl Responder {
+async fn readyz(_c: Data<State>, _req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json("ready")
 }
 
-#[get("/livez")]
-async fn livez(_c: Data<State>, _req: HttpRequest ) -> impl Responder {
-    HttpResponse::Ok().json("live")
-}
-
 #[get("/")]
-async fn index(c: Data<State>, _req: HttpRequest ) -> impl Responder {
-    let d = c.diagnostics().await;
-    HttpResponse::Ok().json(&d)
+async fn index(c: Data<State>, _req: HttpRequest) -> impl Responder {
+    let d = c
+        .diagnostics()
+        .map_err(|e| HttpResponse::InternalServerError().json(e.to_string()));
+    match d {
+        Ok(d) => HttpResponse::Ok().json(d),
+        Err(e) => e,
+    }
 }
 
 #[tokio::main]
@@ -41,7 +41,6 @@ async fn main() -> anyhow::Result<()> {
 
     let controller = controller::run(state.clone());
 
-
     let server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(state.clone()))
@@ -49,11 +48,9 @@ async fn main() -> anyhow::Result<()> {
             .service(index)
             .service(healthz)
             .service(readyz)
-            .service(livez)
     })
     .bind("0.0.0.0:8080")?;
 
     tokio::join!(controller, server.run()).1?;
     Ok(())
-
 }
