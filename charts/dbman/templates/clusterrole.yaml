@@ -4,7 +4,7 @@ metadata:
   name: {{ template "dbman.fullname" . }}
 rules:
 - apiGroups: ["dbman.hef.sh"]
-  resources: ["database", databaseserver]
+  resources: ["databases", databaseservers]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["secret"]
