@@ -277,14 +277,17 @@ impl Diagnostics {
 
 #[derive(Clone, Default)]
 pub struct State {
-    pub diangostics: Arc<RwLock<Diagnostics>>,
+    diagnostics: Arc<RwLock<Diagnostics>>,
 }
 
 impl State {
+    pub async fn diagnostics(&self) -> Diagnostics {
+        self.diagnostics.read().unwrap().clone()
+    }
     pub fn to_context(&self, client: Client) -> Arc<Context> {
         Arc::new(Context {
             client,
-            diagnostics: self.diangostics.clone(),
+            diagnostics: self.diagnostics.clone(),
         })
     }
 }
