@@ -91,6 +91,11 @@ jobs:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
     
+      - name: create crds for helm chart
+        run: |
+          mkdir charts/dbman/crds
+          cargo run --bin crdgen > charts/dbman/crds/crds.yaml
+      
       - name: Push Helm chart to OCI compatible registry (Github)
         uses: bsord/helm-push@v4.2.0
         with:
