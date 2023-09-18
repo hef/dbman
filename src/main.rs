@@ -21,12 +21,10 @@ async fn readyz(_c: Data<State>, _req: HttpRequest) -> impl Responder {
 
 #[get("/")]
 async fn index(c: Data<State>, _req: HttpRequest) -> impl Responder {
-    let d = c
-        .diagnostics()
-        .map_err(|e| HttpResponse::InternalServerError().json(e.to_string()));
+    let d = c.diagnostics();
     match d {
         Ok(d) => HttpResponse::Ok().json(d),
-        Err(e) => e,
+        Err(e) => HttpResponse::InternalServerError().json(e.to_string()),
     }
 }
 
