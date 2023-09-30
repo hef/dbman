@@ -40,5 +40,5 @@ tokio-postgres = "0.7.10"
 
 [profile.for-distribution]
 inherits = "release"
-lto="thin"
-codegen-units=1
+#lto="thin"
+#codegen-units=1
