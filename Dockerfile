@@ -1,5 +1,5 @@
-FROM docker.io/library/rust:1.72.1-alpine AS chef
-RUN apk add --no-cache musl-dev
+FROM docker.io/library/rust:1.72.1 AS chef
+#RUN apk add --no-cache clang llvm musl-dev libgcc
 RUN cargo install cargo-chef
 WORKDIR /app
 
