@@ -61,13 +61,13 @@ jobs:
             type=ref,event=pr
             type=raw,value=${{ steps.semantic.outputs.version }},enable=${{ steps.semantic.outputs.version != '' }}
 
-      - name: Determine cargo build mode
-        id: cargo-build-mode
+      - name: Determine cargo profile mode
+        id: cargo-profile
         run: |
           if ${{ steps.semantic.outputs.version != '' }}; then
-            echo "cargo-build-args=--profile for-distribution" >> $GITHUB_OUTPUT
+            echo "cargo-profile=for-distribution" >> $GITHUB_OUTPUT
           else
-            echo "cargo-build-args=--release" >> $GITHUB_OUTPUT
+            echo "cargo-profile=release" >> $GITHUB_OUTPUT
           fi
       
       - name: Build and push
@@ -80,7 +80,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            CARGO_BUILD_ARGS=${{ steps.cargo-build-mode.outputs.cargo-build-args }}
+            CARGO_PROFILE=${{ steps.cargo-profile.outputs.cargo-profile }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
