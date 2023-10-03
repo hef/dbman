@@ -1,11 +1,11 @@
 FROM docker.io/library/rust:1.72.1 AS chef
 #RUN apk add --no-cache clang llvm musl-dev libgcc
-#RUN cargo install cargo-chef
-#WORKDIR /app
+RUN cargo install cargo-chef
+WORKDIR /app
 
-#FROM chef AS planner
-#COPY . .
-#RUN cargo chef prepare --recipe-path recipe.json
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 ARG CARGO_PROFILE="release"
