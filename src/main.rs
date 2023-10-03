@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(state.clone()))
-            .wrap(Logger::default().exclude("/healthz"))
+            .wrap(Logger::default().exclude("/healthz").exclude("/readyz"))
             .service(index)
             .service(healthz)
             .service(readyz)
