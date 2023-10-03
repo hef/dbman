@@ -5,7 +5,7 @@ metadata:
 rules:
 - apiGroups: ["dbman.hef.sh"]
   resources: ["databases", databaseservers]
-  verbs: ["get", "list", "watch"]
+  verbs: ["get", "list", "patch", "watch"]
 - apiGroups: [""]
   resources: ["secret"]
   verbs: ["get"]
