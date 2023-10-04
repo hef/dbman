@@ -9,8 +9,8 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 ARG CARGO_PROFILE="release"
-#COPY --from=planner /app/recipe.json recipe.json
-#RUN cargo chef cook --profile ${CARGO_PROFILE} --recipe-path recipe.json
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --profile ${CARGO_PROFILE} --recipe-path recipe.json
 COPY . .
 RUN cargo install --profile ${CARGO_PROFILE} --bin controller --path .
 
