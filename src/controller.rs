@@ -106,8 +106,9 @@ impl Database {
             .to_owned();
 
         let api: Api<DatabaseServer> = Api::namespaced(client.clone(), &database_server_namespace);
-        let dbs = api.get(&self.spec.database_server_ref.name).await?;
-        let dbc = Dbc::new(&dbs.spec.conn_string).await?;
+        let dbs: DatabaseServer = api.get(&self.spec.database_server_ref.name).await?;
+        let (superuser_name, superuser_password) = dbs.get_credentials(client).await?;
+        let dbc = Dbc::new(&dbs.spec.conn_string, &superuser_name, &superuser_password).await?;
         Ok(dbc)
     }
     async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
@@ -250,6 +251,55 @@ impl Database {
     }
 }
 
+impl DatabaseServer {
+    async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
+        let namespace = self
+            .namespace()
+            .ok_or(Error::MissingNamespace(self.name_any()))?;
+        let secret_name = self.spec.superuser_secret.as_ref();
+        let secret = Api::<Secret>::namespaced(client.clone(), &namespace)
+            .get(secret_name)
+            .await?;
+
+        let username = String::from_utf8(
+            secret
+                .data
+                .as_ref()
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "username".to_owned(),
+                ))?
+                .get("username")
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "username".to_owned(),
+                ))?
+                .0
+                .clone(),
+        )
+        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
+
+        let password = String::from_utf8(
+            secret
+                .data
+                .as_ref()
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "password".to_owned(),
+                ))?
+                .get("password")
+                .ok_or(Error::SecretMissingKey(
+                    secret_name.to_owned(),
+                    "password".to_owned(),
+                ))?
+                .0
+                .clone(),
+        )
+        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
+
+        Ok((username, password))
+    }
+}
 #[derive(Clone, Serialize)]
 pub struct Diagnostics {
     #[serde(deserialize_with = "from_ts")]
