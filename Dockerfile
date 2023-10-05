@@ -1,5 +1,4 @@
 FROM --platform=$BUILDPLATFORM debian AS chef
-#RUN apk add --no-cache clang curl llvm lld musl-tools
 RUN apt-get update && apt-get install -y clang curl llvm lld musl-tools gcc-multilib g++-multilib
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -28,7 +27,6 @@ COPY . .
 RUN cargo  build --bin controller --profile ${CARGO_PROFILE} --target=`cat /tmp/targetarch`-unknown-linux-musl
 RUN mkdir -p /${TARGETARCH}
 RUN cp /app/target/`cat /tmp/targetarch`-unknown-linux-musl/${CARGO_PROFILE}/controller /${TARGETARCH}/controller
-
 
 FROM scratch AS runtime
 ARG TARGETARCH
