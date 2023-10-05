@@ -20,7 +20,7 @@ ENV AR_aarch64_unknown_linux_musl=llvm-ar
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
 ENV CC_x86_64_unknown_linux_musl=clang
 ENV AR_x86_64_unknown_linux_musl=llvm-ar
-ENV CARGO_TARGET_x86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
+ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
 COPY --from=planner /app/recipe.json recipe.json
 RUN echo ${TARGETARCH} | sed s/arm64/aarch64/ | sed s/amd64/x86_64/ > /tmp/targetarch
 RUN cargo chef cook --profile ${CARGO_PROFILE} --target=`cat /tmp/targetarch`-unknown-linux-musl --recipe-path recipe.json
