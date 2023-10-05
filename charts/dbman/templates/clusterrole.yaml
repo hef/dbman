@@ -6,7 +6,7 @@ rules:
 - apiGroups: ["dbman.hef.sh"]
   resources: ["databases", databaseservers]
   verbs: ["get", "list", "patch", "watch"]
-- apiGroups: [""]
+- apiGroups: ["events.k8s.io"]
   resources: ["events"]
   verbs: ["create"]
 - apiGroups: [""]
