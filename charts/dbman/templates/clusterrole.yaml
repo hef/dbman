@@ -7,5 +7,5 @@ rules:
   resources: ["databases", databaseservers]
   verbs: ["get", "list", "patch", "watch"]
 - apiGroups: [""]
-  resources: ["secret"]
+  resources: ["secrets"]
   verbs: ["get"]
