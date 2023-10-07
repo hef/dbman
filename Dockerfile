@@ -1,7 +1,7 @@
-FROM --platform=$BUILDPLATFORM debian AS chef
+FROM --platform=$BUILDPLATFORM rust:1.72.1 AS chef
 RUN apt-get update && apt-get install -y clang curl llvm lld musl-tools gcc-multilib g++-multilib
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+#ENV PATH="/root/.cargo/bin:${PATH}"
 RUN rustup target add aarch64-unknown-linux-musl
 RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo install cargo-chef 
@@ -24,7 +24,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN echo ${TARGETARCH} | sed s/arm64/aarch64/ | sed s/amd64/x86_64/ > /tmp/targetarch
 RUN cargo chef cook --profile ${CARGO_PROFILE} --target=`cat /tmp/targetarch`-unknown-linux-musl --recipe-path recipe.json
 COPY . .
-RUN cargo  build --bin controller --profile ${CARGO_PROFILE} --target=`cat /tmp/targetarch`-unknown-linux-musl
+RUN cargo build --bin controller --profile ${CARGO_PROFILE} --target=`cat /tmp/targetarch`-unknown-linux-musl
 RUN mkdir -p /${TARGETARCH}
 RUN cp /app/target/`cat /tmp/targetarch`-unknown-linux-musl/${CARGO_PROFILE}/controller /${TARGETARCH}/controller
 
