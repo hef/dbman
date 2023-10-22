@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Create k8s Kind Cluster
+      uses: helm/kind-action@v1.5.0
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
