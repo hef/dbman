@@ -1,6 +1,11 @@
-use crate::{dbc::Dbc, Error, Result};
+use crate::{
+    condition::{Reason, Status, Type},
+    dbc::Dbc,
+    Error, Result,
+};
 use k8s_openapi::{
     api::core::v1::Secret,
+    apimachinery::pkg::apis::meta::v1::{Condition, Time},
     chrono::{DateTime, Utc},
 };
 use log::{error, warn};
@@ -11,7 +16,7 @@ use std::{
 
 use futures::StreamExt;
 use kube::{
-    api::ListParams,
+    api::{ListParams, Patch, PatchParams},
     runtime::{
         controller::Action,
         events::{Event, EventType, Recorder, Reporter},
@@ -46,6 +51,7 @@ pub struct DatabaseServerSpec {
     version = "v1alpha2",
     kind = "Database",
     plural = "databases",
+    status = "DatabaseStatus",
     namespaced
 )]
 pub struct DatabaseSpec {
@@ -61,7 +67,12 @@ pub struct DatabaseServerRef {
     pub name: String,
     pub namespace: Option<String>,
 }
-pub struct DatasbaseStatus {}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+pub struct DatabaseStatus {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(schema_with = "crate::condition::schema")]
+    pub conditions: Vec<Condition>,
+}
 
 #[derive(Clone)]
 pub struct Context {
@@ -164,6 +175,15 @@ impl Database {
         let dbc = self.dbc(&client).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
 
+        /*self.set_condition(
+            &client,
+            Type::Ready,
+            Status::False,
+            Reason::Initializing,
+            "Initializing",
+        )
+        .await?;*/
+
         let (owner, password) = self.get_credentials(&client).await?;
 
         if !dbc.does_user_exist(&owner).await? {
@@ -216,7 +236,53 @@ impl Database {
                 .await?;
         }
 
+        self.set_condition(
+            &client,
+            Type::Ready,
+            Status::True,
+            Reason::Success,
+            "",
+        )
+        .await?;
+
         Ok(Action::requeue(Duration::from_secs(5 * 60)))
+    }
+
+    async fn set_condition(
+        &self,
+        client: &Client,
+        type_: Type,
+        status: Status,
+        reason: Reason,
+        message: &str,
+    ) -> Result<()> {
+        let condition = Condition {
+            last_transition_time: Time(Utc::now()),
+            message: message.to_owned(),
+            observed_generation: self.metadata.generation,
+            reason: reason.to_string(),
+            status: status.to_string(),
+            type_: type_.to_string(),
+        };
+
+        // todo: use Patch::Apply for server side apply
+        let patch = Patch::Merge(serde_json::json!({
+            "status": {
+                "conditions": [condition]
+            }
+        }));
+        let api = Api::<Database>::namespaced(
+            client.clone(),
+            &self
+                .namespace()
+                .ok_or(Error::MissingNamespace(self.name_any()))?,
+        );
+
+        //let pp = PatchParams::apply("dbman-condition");
+        let pp = PatchParams::default();
+
+        api.patch_status(&self.name_any(), &pp, &patch).await?;
+        Ok(())
     }
 
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action> {

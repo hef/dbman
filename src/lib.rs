@@ -2,7 +2,8 @@
 #![warn(clippy::expect_used)]
 #![warn(clippy::todo)]
 #![warn(clippy::panic)]
-pub mod controller;
+mod condition;
+mod controller;
 
 use std::sync::RwLockReadGuard;
 

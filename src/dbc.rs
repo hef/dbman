@@ -8,9 +8,13 @@ pub struct Dbc {
 }
 
 impl Dbc {
-    pub async fn new(config: &str, username: &str, password: &str) -> Result<Self, tokio_postgres::Error> {
+    pub async fn new(
+        config: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<Self, tokio_postgres::Error> {
         info!("Connecting to {}", config);
-        let full_config = format!("{} user={} password={}", config, username, password );
+        let full_config = format!("{} user={} password={}", config, username, password);
         let (client, connection) = tokio_postgres::connect(&full_config, NoTls).await?;
         let _join_handle = tokio::spawn(async move {
             if let Err(e) = connection.await {
