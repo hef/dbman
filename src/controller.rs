@@ -236,14 +236,8 @@ impl Database {
                 .await?;
         }
 
-        self.set_condition(
-            &client,
-            Type::Ready,
-            Status::True,
-            Reason::Success,
-            "",
-        )
-        .await?;
+        self.set_condition(&client, Type::Ready, Status::True, Reason::Success, "")
+            .await?;
 
         Ok(Action::requeue(Duration::from_secs(5 * 60)))
     }
