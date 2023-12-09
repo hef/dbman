@@ -35,11 +35,11 @@ serde = { version = "1.0.190", features = ["derive", "serde_derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.25"
 thiserror = "1.0.50"
-tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.35.0", features = ["macros", "rt-multi-thread"] }
 tokio-postgres = "0.7.10"
 
 [dev-dependencies]
-tokio = { version = "1.33.0", features = ["macros", "process", "rt-multi-thread"] }
+tokio = { version = "1.35.0", features = ["macros", "process", "rt-multi-thread"] }
 http = "0.2.9"
 reqwest = { version = "0.11.22", features = ["json"] }
 tokio-stream = { version = "0.1.14", features = ["net"] }
