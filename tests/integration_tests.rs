@@ -12,8 +12,9 @@ use crate::common::{DatabaseServerHandle, ScopedNamespace};
 #[tokio::test]
 async fn test_basic() {
     let client = common::get_kube_client().await;
-    common::instal_crds(&client).await;
+    // setup cpng needs to come before install crds, as crds waits for cpng's crds to be ready
     common::setup_cnpg(&client).await;
+    common::instal_crds(&client).await;
     let dbname = "my-db";
     let database_server = "my-db-cluster";
 
