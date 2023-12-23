@@ -9,7 +9,9 @@ use log::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
-struct Args {}
+struct Args {
+    owner: String,
+}
 
 #[get("/healthz")]
 async fn healthz(_c: Data<State>, _req: HttpRequest) -> impl Responder {

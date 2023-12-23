@@ -29,6 +29,7 @@ use kube::{
 use log::info;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use crate::heritage::Heritage;
 
 pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 
@@ -221,6 +222,8 @@ impl Database {
                 })
                 .await?;
             dbc.create_database(owner.as_ref(), database_name).await?;
+            let heritage = Heritage::builder().owner(owner).resource(&self).build();
+            dbc.apply_heritage(database_name, &heritage).await?;
             recorder
                 .publish(Event {
                     type_: EventType::Normal,
@@ -232,6 +235,7 @@ impl Database {
                     secondary: None,
                 })
                 .await?;
+            dbc.validate_heritage(database_name, &heritage).await?;
             dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
                 .await?;
         }

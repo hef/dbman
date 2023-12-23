@@ -100,7 +100,7 @@ async fn test_basic() {
         .unwrap()
         .unwrap();
 
-    let result = dbc
+    let _result = dbc
         .query(
             "select 1 from pg_database where datname = $1::TEXT",
             &[&dbname],

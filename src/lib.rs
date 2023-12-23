@@ -4,6 +4,7 @@
 #![warn(clippy::panic)]
 mod condition;
 mod controller;
+mod heritage;
 
 use std::sync::RwLockReadGuard;
 
@@ -42,6 +43,15 @@ pub enum Error {
 
     #[error("Secret {0} did not contain valid UTF-8: {1}")]
     SecretDidNotContainValidUTF8(String, String),
+
+    #[error("failed to serialize heritage for database {1}: {0}")]
+    FailedToSerializeHeritage(#[source] Box<serde_json::Error>, String),
+
+    #[error("Database {0} is missing comment {1}")]
+    MissingHeritage(String, String),
+
+    #[error("Database {0} failed validation. {1} has value {2}, expected {3}" )]
+    HeritageValidation(String, String, String, String),
 }
 
 impl From<kube::Error> for Error {

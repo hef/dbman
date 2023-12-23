@@ -56,7 +56,7 @@ impl std::fmt::Display for Status {
     }
 }
 
-pub(crate) enum Type {
+pub enum Type {
     Ready,
 }
 

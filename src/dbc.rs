@@ -1,8 +1,11 @@
+use k8s_openapi::chrono::naive::serde;
 use log::info;
 use postgres_protocol::escape::{escape_identifier, escape_literal};
 use tokio_postgres::{Client, NoTls};
 
-pub struct Dbc {
+use crate::{heritage::Heritage, Error};
+
+pub(crate) struct Dbc {
     client: Client,
     _join_handle: tokio::task::JoinHandle<()>,
 }
@@ -132,6 +135,43 @@ impl Dbc {
                 &[],
             )
             .await?;
+        Ok(())
+    }
+
+    pub async fn apply_heritage(&self, database: &str, heritage: &Heritage) -> Result<(), Error> {
+        self.client
+            .execute(
+                "COMMENT ON DATABASE $1::TEXT IS $2::TEXT",
+                &[
+                    &database,
+                    &(serde_json::to_string(heritage).map_err(|e| {
+                        Error::FailedToSerializeHeritage(Box::new(e), database.into())
+                    })?),
+                ],
+            )
+            .await?;
+        // "heritage=external-dns,external-dns/owner=default,external-dns/resource=crd/networking/cloudflared"
+        // "heritage=dbman,dbman/owner=default,dbman/resource=database/default/db"
+        Ok(())
+    }
+
+    pub async fn validate_heritage(
+        &self,
+        database: &str,
+        heritage: &Heritage,
+    ) -> Result<(), Error> {
+        let result = self.client.query(
+            "select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = $1::TEXT",
+         &[&database]).await?;
+        if result.len() != 1 {
+            return Err(Error::MissingHeritage(
+                database.into(),
+                serde_json::to_string(heritage)
+                    .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database.into()))?,
+            ));
+        }
+        let description: String = result[0].get(0);
+        heritage.validate(&description)?;
         Ok(())
     }
 }
