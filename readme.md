@@ -8,3 +8,10 @@ You will need a seperate postgres server/cluster to host the databases.
 ```
 helm install oci://ghcr.io/hef/dbman/dbman
 ```
+
+
+# testing
+```
+kind create cluster
+cargo test
+```
