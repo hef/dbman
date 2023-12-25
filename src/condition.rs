@@ -29,6 +29,8 @@ pub fn schema(_: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schem
 pub(crate) enum Reason {
     Initializing,
     Success,
+    ReconcileError,
+    FinalizeError,
 }
 
 impl std::fmt::Display for Reason {
@@ -36,6 +38,7 @@ impl std::fmt::Display for Reason {
         match self {
             Reason::Initializing => write!(f, "Initializing"),
             Reason::Success => write!(f, "Success"),
+            Reason::ReconcileError => write!(f, "ReconcileError"),
         }
     }
 }
@@ -43,7 +46,7 @@ impl std::fmt::Display for Reason {
 pub(crate) enum Status {
     True,
     False,
-    Unknown,
+    //Unknown,
 }
 
 impl std::fmt::Display for Status {
@@ -51,19 +54,21 @@ impl std::fmt::Display for Status {
         match self {
             Status::True => write!(f, "True"),
             Status::False => write!(f, "False"),
-            Status::Unknown => write!(f, "Unknown"),
+            //Status::Unknown => write!(f, "Unknown"),
         }
     }
 }
 
 pub enum Type {
     Ready,
+    Finalized,
 }
 
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Type::Ready => write!(f, "Ready"),
+            Type::Finalized => write!(f, "Ready"),
         }
     }
 }

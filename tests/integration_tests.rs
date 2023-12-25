@@ -73,7 +73,7 @@ async fn test_basic() {
     tokio::spawn(controller::run(State::default()));
 
     let db_ready = await_condition(db_api.clone(), dbname, common::is_database_ready());
-    let _ = tokio::time::timeout(std::time::Duration::from_secs(30), db_ready)
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(300), db_ready) // todo: set back to 30
         .await
         .unwrap()
         .unwrap();

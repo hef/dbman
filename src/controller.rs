@@ -90,12 +90,54 @@ async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     let dbs: Api<Database> = Api::namespaced(ctx.client.clone(), &ns);
 
     info!("Reconciling Database \"{}\" in {}", db.name_any(), ns);
-    finalizer(&dbs, DATABASE_FINALIZER, db, |event| async {
-        match event {
-            Finalizer::Apply(db) => db.reconcile(ctx.clone()).await,
-            Finalizer::Cleanup(db) => db.cleanup(ctx.clone()).await,
+    finalizer(
+        &dbs,
+        DATABASE_FINALIZER,
+        db,
+        |event| async {
+            match event {
+                Finalizer::Apply(db) => {
+                    match db.reconcile(ctx.clone()).await {
+                        Ok(action) => { Ok(action)}
+                        Err(e) => {
+                            let client = ctx.client.clone();
+                            let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
+                            db.set_condition(&client, Type::Ready, Status::False, Reason::ReconcileError, &e.to_string()).await.ok();
+                            recorder.publish(Event {
+                                type_: EventType::Warning,
+                                reason: "ReconcilingError".into(),
+                                note: Some(e.to_string()),
+                                action: "Reconciling".into(),
+                                secondary: None,
+                            }).await.ok();
+                            error!("error reconciling: {}", e);
+                            Err(e)
+                        }
+
+                    }
+                },
+                Finalizer::Cleanup(db) => {
+                    match db.cleanup(ctx.clone()).await {
+                        Ok(action) => {Ok(action)}
+                        Err(e) => {
+                            let client = ctx.client.clone();
+                            let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
+                            db.set_condition(&client, Type::Finalized, Status::False, Reason::FinalizeError, &e.to_string()).await.ok();
+                            recorder.publish(Event {
+                                type_: EventType::Warning,
+                                reason: "FinalizeError".into(),
+                                note: Some(e.to_string()),
+                                action: "Finalizing".into(),
+                                secondary: None,
+                            }).await.ok();
+                            error!("error finalizing: {}", e);
+                            Err(e)
+                        }
+                    }
+                },
+            }
         }
-    })
+    )
     .await
     .map_err(|e| Error::FinalizerError(Box::new(e)))
 }
@@ -222,7 +264,7 @@ impl Database {
                 })
                 .await?;
             dbc.create_database(owner.as_ref(), database_name).await?;
-            let heritage = Heritage::builder().owner(owner).resource(&self).build();
+            let heritage = Heritage::builder().resource(&self).build();
             dbc.apply_heritage(database_name, &heritage).await?;
             recorder
                 .publish(Event {
@@ -286,6 +328,9 @@ impl Database {
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action> {
         let client = ctx.client.clone();
         let dbc = self.dbc(&client).await?;
+        let heritage = Heritage::builder().resource(&self).build();
+        let database_name = &self.spec.database_name;
+        dbc.validate_heritage(database_name, &heritage).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         if self.spec.prune.unwrap_or(true) {
             let database_name = &self.spec.database_name;

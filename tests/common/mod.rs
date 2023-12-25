@@ -20,7 +20,7 @@ use kube::{
 };
 use serde_json::json;
 use std::{collections::BTreeMap, net::SocketAddr};
-use tokio::{net::TcpListener, process::Command, runtime::Handle};
+use tokio::{net::TcpListener, process::Command};
 use tokio_postgres::{tls::NoTlsStream, NoTls, Socket};
 use tokio_stream::wrappers::TcpListenerStream;
 
@@ -121,6 +121,7 @@ pub async fn instal_crds(client: &Client) {
 
 pub struct DatabaseServerHandle {
     namespace: String,
+    #[allow(dead_code)] // #[expect(dead_code, reason = "port_forwarder is a handle that we drop")]
     port_forwarder: tokio::task::JoinHandle<()>,
     port: u16,
 }

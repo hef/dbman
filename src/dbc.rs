@@ -1,4 +1,3 @@
-use k8s_openapi::chrono::naive::serde;
 use log::info;
 use postgres_protocol::escape::{escape_identifier, escape_literal};
 use tokio_postgres::{Client, NoTls};
@@ -171,7 +170,7 @@ impl Dbc {
             ));
         }
         let description: String = result[0].get(0);
-        heritage.validate(&description)?;
+        heritage.validate(&database, &description)?;
         Ok(())
     }
 }

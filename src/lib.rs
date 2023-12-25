@@ -47,11 +47,15 @@ pub enum Error {
     #[error("failed to serialize heritage for database {1}: {0}")]
     FailedToSerializeHeritage(#[source] Box<serde_json::Error>, String),
 
+    #[error("failed to deserialize heritage for database {1}: {0}")]
+    FailedToDeserializeHeritage(#[source] Box<serde_json::Error>, String),
+
     #[error("Database {0} is missing comment {1}")]
     MissingHeritage(String, String),
 
     #[error("Database {0} failed validation. {1} has value {2}, expected {3}" )]
     HeritageValidation(String, String, String, String),
+
 }
 
 impl From<kube::Error> for Error {
