@@ -14,6 +14,7 @@ use std::{
     time::Duration,
 };
 
+use crate::heritage::Heritage;
 use futures::StreamExt;
 use kube::{
     api::{ListParams, Patch, PatchParams},
@@ -29,7 +30,6 @@ use kube::{
 use log::info;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use crate::heritage::Heritage;
 
 pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 
@@ -90,54 +90,66 @@ async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     let dbs: Api<Database> = Api::namespaced(ctx.client.clone(), &ns);
 
     info!("Reconciling Database \"{}\" in {}", db.name_any(), ns);
-    finalizer(
-        &dbs,
-        DATABASE_FINALIZER,
-        db,
-        |event| async {
-            match event {
-                Finalizer::Apply(db) => {
-                    match db.reconcile(ctx.clone()).await {
-                        Ok(action) => { Ok(action)}
-                        Err(e) => {
-                            let client = ctx.client.clone();
-                            let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
-                            db.set_condition(&client, Type::Ready, Status::False, Reason::ReconcileError, &e.to_string()).await.ok();
-                            recorder.publish(Event {
-                                type_: EventType::Warning,
-                                reason: "ReconcilingError".into(),
-                                note: Some(e.to_string()),
-                                action: "Reconciling".into(),
-                                secondary: None,
-                            }).await.ok();
-                            error!("error reconciling: {}", e);
-                            Err(e)
-                        }
-
-                    }
-                },
-                Finalizer::Cleanup(db) => {
-                    match db.cleanup(ctx.clone()).await {
-                        Ok(action) => {Ok(action)}
-                        Err(e) => {
-                            let client = ctx.client.clone();
-                            let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
-                            db.set_condition(&client, Type::Finalized, Status::False, Reason::FinalizeError, &e.to_string()).await.ok();
-                            recorder.publish(Event {
-                                type_: EventType::Warning,
-                                reason: "FinalizeError".into(),
-                                note: Some(e.to_string()),
-                                action: "Finalizing".into(),
-                                secondary: None,
-                            }).await.ok();
-                            error!("error finalizing: {}", e);
-                            Err(e)
-                        }
-                    }
-                },
-            }
+    finalizer(&dbs, DATABASE_FINALIZER, db, |event| async {
+        match event {
+            Finalizer::Apply(db) => match db.reconcile(ctx.clone()).await {
+                Ok(action) => Ok(action),
+                Err(e) => {
+                    let client = ctx.client.clone();
+                    let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
+                    db.set_condition(
+                        &client,
+                        Type::Ready,
+                        Status::False,
+                        Reason::ReconcileError,
+                        &e.to_string(),
+                    )
+                    .await
+                    .ok();
+                    recorder
+                        .publish(Event {
+                            type_: EventType::Warning,
+                            reason: "ReconcilingError".into(),
+                            note: Some(e.to_string()),
+                            action: "Reconciling".into(),
+                            secondary: None,
+                        })
+                        .await
+                        .ok();
+                    error!("error reconciling: {}", e);
+                    Err(e)
+                }
+            },
+            Finalizer::Cleanup(db) => match db.cleanup(ctx.clone()).await {
+                Ok(action) => Ok(action),
+                Err(e) => {
+                    let client = ctx.client.clone();
+                    let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
+                    db.set_condition(
+                        &client,
+                        Type::Finalized,
+                        Status::False,
+                        Reason::FinalizeError,
+                        &e.to_string(),
+                    )
+                    .await
+                    .ok();
+                    recorder
+                        .publish(Event {
+                            type_: EventType::Warning,
+                            reason: "FinalizeError".into(),
+                            note: Some(e.to_string()),
+                            action: "Finalizing".into(),
+                            secondary: None,
+                        })
+                        .await
+                        .ok();
+                    error!("error finalizing: {}", e);
+                    Err(e)
+                }
+            },
         }
-    )
+    })
     .await
     .map_err(|e| Error::FinalizerError(Box::new(e)))
 }

@@ -53,9 +53,8 @@ pub enum Error {
     #[error("Database {0} is missing comment {1}")]
     MissingHeritage(String, String),
 
-    #[error("Database {0} failed validation. {1} has value {2}, expected {3}" )]
+    #[error("Database {0} failed validation. {1} has value {2}, expected {3}")]
     HeritageValidation(String, String, String, String),
-
 }
 
 impl From<kube::Error> for Error {

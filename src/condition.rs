@@ -39,6 +39,7 @@ impl std::fmt::Display for Reason {
             Reason::Initializing => write!(f, "Initializing"),
             Reason::Success => write!(f, "Success"),
             Reason::ReconcileError => write!(f, "ReconcileError"),
+            Reason::FinalizeError => write!(f, "FinalizeError"),
         }
     }
 }
