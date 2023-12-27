@@ -4,7 +4,10 @@ metadata:
   name: {{ template "dbman.fullname" . }}
 rules:
 - apiGroups: ["dbman.hef.sh"]
-  resources: ["databases", "databaseservers"]
+  resources:
+    - databases
+    - databases/status #patch only?
+    - databaseservers
   verbs: ["get", "list", "patch", "watch"]
 - apiGroups: ["events.k8s.io"]
   resources: ["events"]
