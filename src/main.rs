@@ -10,7 +10,7 @@ use log::info;
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct Args {
-    owner: String,
+    //owner: String,
 }
 
 #[get("/healthz")]
