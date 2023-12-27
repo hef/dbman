@@ -6,7 +6,7 @@ You will need a seperate postgres server/cluster to host the databases.
 
 ## installing with helm
 ```
-helm install oci://ghcr.io/hef/dbman/dbman
+helm install oci://ghcr.io/hef/charts/dbman
 ```
 
 
