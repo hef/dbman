@@ -276,7 +276,7 @@ impl Database {
                 })
                 .await?;
             dbc.create_database(owner.as_ref(), database_name).await?;
-            let heritage = Heritage::builder().resource(&self).build();
+            let heritage = Heritage::builder().resource(self).build();
             dbc.apply_heritage(database_name, &heritage).await?;
             recorder
                 .publish(Event {
@@ -340,7 +340,7 @@ impl Database {
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action> {
         let client = ctx.client.clone();
         let dbc = self.dbc(&client).await?;
-        let heritage = Heritage::builder().resource(&self).build();
+        let heritage = Heritage::builder().resource(self).build();
         let database_name = &self.spec.database_name;
         dbc.validate_heritage(database_name, &heritage).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);

@@ -138,15 +138,16 @@ impl Dbc {
     }
 
     pub async fn apply_heritage(&self, database: &str, heritage: &Heritage) -> Result<(), Error> {
+        let heritage_text = serde_json::to_string(heritage).map_err(|e|{
+            Error::FailedToSerializeHeritage(Box::new(e), database.into())
+        })?;
+        //let heritage_text = "sup";
         self.client
             .execute(
-                "COMMENT ON DATABASE $1::TEXT IS $2::TEXT",
-                &[
-                    &database,
-                    &(serde_json::to_string(heritage).map_err(|e| {
-                        Error::FailedToSerializeHeritage(Box::new(e), database.into())
-                    })?),
-                ],
+                &format!("COMMENT ON DATABASE {} IS {}", escape_identifier(database), escape_literal(&heritage_text)),&[]
+                //"COMMENT ON DATABASE $1::TEXT IS $2::TEXT",
+                //"UPDATE pg_shdescription set description = $2::TEXT FROM pg_database where pg_shdescription.objoid = pg_database.oid AND pg_database.datname = $1::TEXT",
+                //&[&database, &heritage_text],
             )
             .await?;
         // "heritage=external-dns,external-dns/owner=default,external-dns/resource=crd/networking/cloudflared"
@@ -162,6 +163,7 @@ impl Dbc {
         let result = self.client.query(
             "select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = $1::TEXT",
          &[&database]).await?;
+        //let result = self.client.query(&format!("select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = {}", escape_identifier(database)), &[]).await?;
         if result.len() != 1 {
             return Err(Error::MissingHeritage(
                 database.into(),

@@ -11,6 +11,7 @@ use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
 #[tokio::test]
 async fn test_basic() {
+    env_logger::init();
     let client = common::get_kube_client().await;
     // setup cpng needs to come before install crds, as crds waits for cpng's crds to be ready
     common::setup_cnpg(&client).await;
@@ -62,7 +63,7 @@ async fn test_basic() {
             },
             database_name: dbname.into(),
             credentials_secret: "my-db-credentials".into(),
-            prune: Some(false),
+            prune: Some(true),
         },
         status: Some(controller::DatabaseStatus { conditions: vec![] }),
     };
@@ -95,10 +96,10 @@ async fn test_basic() {
         .unwrap();
     let uid = db_object.uid().unwrap();
     let deleted = await_condition(db_api.clone(), dbname, is_deleted(&uid));
-    let _ = tokio::time::timeout(std::time::Duration::from_secs(30), deleted)
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(300), deleted)
         .await
         .unwrap()
-        .unwrap();
+        .expect("timed out deleting api");
 
     let _result = dbc
         .query(
@@ -108,7 +109,5 @@ async fn test_basic() {
         .await
         .unwrap();
 
-    // deleting databases doesn't work yet.
-    // I don't want to enable that until I have some safety features in place.
-    //assert_eq!(0, result.len());
+    assert_eq!(0, result.len());
 }
