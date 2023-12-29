@@ -171,8 +171,6 @@ impl Dbc {
         Ok(())
     }
 
-
-
     pub async fn validate_heritage_on_database(
         &self,
         database_name: &str,

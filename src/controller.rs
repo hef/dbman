@@ -361,6 +361,7 @@ impl Database {
                     secondary: None,
                 })
                 .await?;
+            dbc.validate_heritage_on_role(owner.as_ref(), &heritage).await?;
             dbc.drop_user(owner.as_ref()).await?;
         }
         Ok(Action::await_change())
