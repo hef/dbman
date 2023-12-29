@@ -229,15 +229,7 @@ impl Database {
         let client = ctx.client.clone();
         let dbc = self.dbc(&client).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
-
-        /*self.set_condition(
-            &client,
-            Type::Ready,
-            Status::False,
-            Reason::Initializing,
-            "Initializing",
-        )
-        .await?;*/
+        let heritage = Heritage::builder().resource(self).build();
 
         let (owner, password) = self.get_credentials(&client).await?;
 
@@ -252,6 +244,7 @@ impl Database {
                 })
                 .await?;
             dbc.create_user(&owner).await?;
+            dbc.apply_heritage_to_role(&owner, &heritage).await?;
             recorder
                 .publish(Event {
                     type_: EventType::Normal,
@@ -261,6 +254,9 @@ impl Database {
                     secondary: None,
                 })
                 .await?;
+            dbc.update_password(&owner, &password).await?;
+        } else {
+            dbc.validate_heritage_on_role(&owner, &heritage).await?;
             dbc.update_password(&owner, &password).await?;
         }
 
@@ -276,8 +272,7 @@ impl Database {
                 })
                 .await?;
             dbc.create_database(owner.as_ref(), database_name).await?;
-            let heritage = Heritage::builder().resource(self).build();
-            dbc.apply_heritage(database_name, &heritage).await?;
+            dbc.apply_heritage_to_database(database_name, &heritage).await?;
             recorder
                 .publish(Event {
                     type_: EventType::Normal,
@@ -464,6 +459,7 @@ impl State {
 pub async fn run(state: State) -> Result<(), Error> {
     let client = Client::try_default().await?;
     let databases = Api::<Database>::all(client.clone());
+    let secrets = Api::<Secret>::all(client.clone());
 
     if let Err(e) = databases.list(&ListParams::default().limit(1)).await {
         error!("CRD is not queryable; {e:?}. Is the CRD installed?");

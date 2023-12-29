@@ -137,42 +137,82 @@ impl Dbc {
         Ok(())
     }
 
-    pub async fn apply_heritage(&self, database: &str, heritage: &Heritage) -> Result<(), Error> {
-        let heritage_text = serde_json::to_string(heritage).map_err(|e|{
-            Error::FailedToSerializeHeritage(Box::new(e), database.into())
-        })?;
+    pub async fn apply_heritage_to_database(&self, database_name: &str, heritage: &Heritage) -> Result<(), Error> {
+        let heritage_text = serde_json::to_string(heritage)
+            .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database_name.into()))?;
         //let heritage_text = "sup";
         self.client
             .execute(
-                &format!("COMMENT ON DATABASE {} IS {}", escape_identifier(database), escape_literal(&heritage_text)),&[]
-                //"COMMENT ON DATABASE $1::TEXT IS $2::TEXT",
-                //"UPDATE pg_shdescription set description = $2::TEXT FROM pg_database where pg_shdescription.objoid = pg_database.oid AND pg_database.datname = $1::TEXT",
-                //&[&database, &heritage_text],
+                &format!(
+                    "COMMENT ON DATABASE {} IS {}",
+                    escape_identifier(database_name),
+                    escape_literal(&heritage_text)
+                ),
+                &[],
             )
             .await?;
-        // "heritage=external-dns,external-dns/owner=default,external-dns/resource=crd/networking/cloudflared"
-        // "heritage=dbman,dbman/owner=default,dbman/resource=database/default/db"
         Ok(())
     }
 
-    pub async fn validate_heritage(
+    pub async fn apply_heritage_to_role(&self, role_name: &str, heritage: &Heritage) -> Result<(), Error> {
+        let heritage_text = serde_json::to_string(heritage)
+            .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), role_name.into()))?;
+        //let heritage_text = "sup";
+        self.client
+            .execute(
+                &format!(
+                    "COMMENT ON ROLE {} IS {}",
+                    escape_identifier(role_name),
+                    escape_literal(&heritage_text)
+                ),
+                &[],
+            )
+            .await?;
+        Ok(())
+    }
+
+
+
+    pub async fn validate_heritage_on_database(
         &self,
-        database: &str,
+        database_name: &str,
         heritage: &Heritage,
     ) -> Result<(), Error> {
         let result = self.client.query(
             "select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = $1::TEXT",
-         &[&database]).await?;
+         &[&database_name]).await?;
         //let result = self.client.query(&format!("select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = {}", escape_identifier(database)), &[]).await?;
         if result.len() != 1 {
             return Err(Error::MissingHeritage(
-                database.into(),
+                database_name.into(),
                 serde_json::to_string(heritage)
-                    .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database.into()))?,
+                    .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database_name.into()))?,
             ));
         }
         let description: String = result[0].get(0);
-        heritage.validate(&database, &description)?;
+        heritage.validate(&database_name, &description)?;
         Ok(())
     }
+
+    pub async fn validate_heritage_on_role(
+        &self,
+        role_name: &str,
+        heritage: &Heritage,
+    ) -> Result<(), Error> {
+        let result = self.client.query(
+            "select description from pg_shdescription join pg_roles on objoid = pg_roles.oid where rolname = $1::TEXT",
+            &[&role_name]).await?;
+        //let result = self.client.query(&format!("select description from pg_shdescription join pg_database on objoid = pg_database.oid where datname = {}", escape_identifier(database)), &[]).await?;
+        if result.len() != 1 {
+            return Err(Error::MissingHeritage(
+                role_name.into(),
+                serde_json::to_string(heritage)
+                    .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), role_name.into()))?,
+            ));
+        }
+        let description: String = result[0].get(0);
+        heritage.validate(&role_name, &description)?;
+        Ok(())
+    }
+}
 }
