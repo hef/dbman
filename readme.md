@@ -1,10 +1,10 @@
 # dbman
 
-Create and drop databases for postgres in kubernetes.
+Create and drop databases, and an associated role for postgres in kubernetes.
 
 You will need a seperate postgres server/cluster to host the databases.
 
-## installing with helm
+## Installing with Helm
 ```
 helm install oci://ghcr.io/hef/charts/dbman
 ```
@@ -43,7 +43,7 @@ spec:
 dbman will create a database with the name db1, and a role with username and password specified in db1-credentials
 
 
-## heritage
+## Heritage
 
 dbman will add a pg comment to any database or role that it creates, and will refuse to modify or delete a database or
 role that does not have these comments, or that the comment doesn't match the k8s resource that is being reconciled.
@@ -73,7 +73,7 @@ spec:
   prune: false
 ```
 
-## testing
+## Testing
 The integration tests require a kind cluster.
 
 ```
