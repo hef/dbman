@@ -51,7 +51,7 @@ role that does not have these comments, or that the comment doesn't match the k8
 Error Messages should contain the expected comment when the comment is missing or incorrect, you may apply it yourself 
 in order to adopt a database or role into dbman's management.
 
-## prune flag
+## `prune` Flag
 
 by default, dbman will delete a database and role when the k8s resource gets deleted.  If you want to delete the 
 resource without delete the database and role, set the `prune: false` flag before deleting the resource.
