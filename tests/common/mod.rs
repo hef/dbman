@@ -240,20 +240,6 @@ impl DatabaseServerHandle {
 }
 
 #[must_use]
-pub fn is_cluster_ready() -> impl Condition<DynamicObject> {
-    |obj: Option<&DynamicObject>| {
-        if let Some(cluster) = &obj {
-            if let Some(status) = cluster.data.get("status") {
-                if let Some(phase) = status.get("phase") {
-                    return phase.as_str().unwrap() == "Cluster in healthy state";
-                }
-            }
-        }
-        false
-    }
-}
-
-#[must_use]
 pub fn is_database_ready() -> impl Condition<Database> {
     |obj: Option<&Database>| {
         if let Some(database) = &obj {

@@ -284,7 +284,7 @@ impl Database {
                     secondary: None,
                 })
                 .await?;
-            dbc.validate_heritage(database_name, &heritage).await?;
+            dbc.validate_heritage_on_database(database_name, &heritage).await?;
             dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
                 .await?;
         }
@@ -337,7 +337,7 @@ impl Database {
         let dbc = self.dbc(&client).await?;
         let heritage = Heritage::builder().resource(self).build();
         let database_name = &self.spec.database_name;
-        dbc.validate_heritage(database_name, &heritage).await?;
+        dbc.validate_heritage_on_database(database_name, &heritage).await?;
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         if self.spec.prune.unwrap_or(true) {
             let database_name = &self.spec.database_name;
@@ -460,7 +460,6 @@ impl State {
 pub async fn run(state: State) -> Result<(), Error> {
     let client = Client::try_default().await?;
     let databases = Api::<Database>::all(client.clone());
-    let secrets = Api::<Secret>::all(client.clone());
 
     if let Err(e) = databases.list(&ListParams::default().limit(1)).await {
         error!("CRD is not queryable; {e:?}. Is the CRD installed?");
