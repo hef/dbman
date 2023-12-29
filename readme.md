@@ -51,6 +51,28 @@ role that does not have these comments, or that the comment doesn't match the k8
 Error Messages should contain the expected comment when the comment is missing or incorrect, you may apply it yourself 
 in order to adopt a database or role into dbman's management.
 
+## prune flag
+
+by default, dbman will delete a database and role when the k8s resource gets deleted.  If you want to delete the 
+resource without delete the database and role, set the `prune: false` flag before deleting the resource.
+
+e.g.
+
+```yaml
+apiVersion: dbman.hef.sh/v1alpha2
+kind: Database
+metadata:
+  name: db1
+  namespace: database
+spec:
+  credentials_secret: db1-credentials
+  database_name: db1
+  database_server_ref:
+    namespace: database
+    name: postgres
+  prune: false
+```
+
 ## testing
 The integration tests require a kind cluster.
 
