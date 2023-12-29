@@ -11,7 +11,6 @@ use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
 #[tokio::test]
 async fn test_basic() {
-    env_logger::init();
     let client = common::get_kube_client().await;
     // setup cpng needs to come before install crds, as crds waits for cpng's crds to be ready
     common::setup_cnpg(&client).await;
