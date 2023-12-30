@@ -80,3 +80,8 @@ The integration tests require a kind cluster.
 kind create cluster
 cargo test
 ```
+
+## Similar Projects
+
+ * https://github.com/crossplane-contrib/provider-sql
+ * https://github.com/movetokube/postgres-operator
