@@ -22,7 +22,7 @@ path = "src/lib.rs"
 
 [dependencies]
 actix-web = "4.4.1"
-anyhow = "1.0.77"
+anyhow = "1.0.78"
 clap = { version = "4.4.12", features = ["derive", "env"] }
 env_logger = "0.10.1"
 futures = "0.3.30"
