@@ -1,10 +1,8 @@
 name: Release
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  release:
+    types: ["published"]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -105,5 +103,4 @@ jobs:
           access-token: ${{ secrets.GITHUB_TOKEN }}
           force: true
           chart-folder: charts/dbman
-
       
