@@ -32,7 +32,7 @@ log = "0.4.20"
 postgres-protocol = "0.6.6"
 schemars = "0.8.16"
 serde = { version = "1.0.193", features = ["derive", "serde_derive"] }
-serde_json = "1.0.109"
+serde_json = "1.0.110"
 serde_yaml = "0.9.29"
 thiserror = "1.0.53"
 tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
