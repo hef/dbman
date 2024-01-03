@@ -3,6 +3,9 @@
   "extends": [
     "config:base"
   ],
+  "baseBranches": [
+    "develop"
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
