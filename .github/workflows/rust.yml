@@ -2,9 +2,12 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - '**'
+      - '!renovate/**'
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - '**'
 
 env:
   CARGO_TERM_COLOR: always
