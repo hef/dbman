@@ -1,8 +1,12 @@
 name: Release
 
 on:
-  release:
-    types: ["published"]
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -23,6 +27,7 @@ jobs:
 
       - uses: go-semantic-release/action@v1
         id: semantic
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-generator-opt: "emojis=true"
