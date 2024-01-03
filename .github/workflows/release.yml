@@ -9,6 +9,10 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }} 
+  cancel-in-progress: true
+
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
