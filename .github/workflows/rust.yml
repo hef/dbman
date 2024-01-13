@@ -5,6 +5,7 @@ on:
     branches:
       - '**'
       - '!renovate/**'
+      - '!release-please*'
   pull_request:
     branches: 
       - '**'

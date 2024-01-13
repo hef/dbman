@@ -5,6 +5,9 @@ on:
     branches:
       - '**'
       - '!renovate/**'
+      - '!release-please*'
+    tags:
+      - '*'
   pull_request:
     branches:
       - '**'
@@ -39,11 +42,11 @@ jobs:
           allow-initial-development-versions: true
           update-file: charts/dbman/Chart.yaml
 
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.3.0
-        with:
-          cosign-release: 'v2.1.1'
+      #- name: Install cosign
+      #  if: github.event_name != 'pull_request'
+      #  uses: sigstore/cosign-installer@v3.3.0
+      #  with:
+      #    cosign-release: 'v2.1.1'
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -67,7 +70,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=raw,value=${{ steps.semantic.outputs.version }},enable=${{ steps.semantic.outputs.version != '' }}
+            type=semver,pattern={{version}}
 
       - name: Determine cargo profile mode
         id: cargo-profile
@@ -92,12 +95,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+      #- name: Sign the published Docker image
+      #  if: ${{ github.event_name != 'pull_request' }}
+      #  env:
+      #    TAGS: ${{ steps.meta.outputs.tags }}
+      #    DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      #  run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
     
       - name: create crds for helm chart
         run: |
