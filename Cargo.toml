@@ -44,8 +44,6 @@ http = "1.0.0"
 reqwest = { version = "0.11.23", features = ["json"] }
 tokio-stream = { version = "0.1.14", features = ["net"] }
 
-
-[profile.for-distribution]
-inherits = "release"
+[profile.release]
 lto = true
 codegen-units=1

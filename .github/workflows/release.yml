@@ -60,15 +60,6 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
-
-      - name: Determine cargo profile mode
-        id: cargo-profile
-        run: |
-          if ${{ steps.semantic.outputs.version != '' }}; then
-            echo "cargo-profile=for-distribution" >> $GITHUB_OUTPUT
-          else
-            echo "cargo-profile=release" >> $GITHUB_OUTPUT
-          fi
       
       - name: Build and push
         id: build-and-push
@@ -79,8 +70,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            CARGO_PROFILE=${{ steps.cargo-profile.outputs.cargo-profile }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
