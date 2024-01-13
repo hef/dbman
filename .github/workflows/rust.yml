@@ -2,9 +2,17 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - '**'
+      - '!renovate/**'
+      - '!release-please*'
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }} 
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always

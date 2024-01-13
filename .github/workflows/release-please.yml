@@ -1,0 +1,19 @@
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+name: release-please
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        with:
+          # need a bonus secret to trigger build jobs. the default GITHUB_TOKEN won't work
+          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
