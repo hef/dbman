@@ -85,3 +85,4 @@ cargo test
 
  * https://github.com/crossplane-contrib/provider-sql
  * https://github.com/movetokube/postgres-operator
+ * https://github.com/bonsai-oss/external-db-operator
