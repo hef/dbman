@@ -17,4 +17,4 @@ jobs:
         with:
           # need a bonus secret to trigger build jobs.
           token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-          release-type: rust
+          release-type: manifest
