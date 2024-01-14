@@ -1,24 +1,23 @@
 use controller::State;
 use kube::{
-    api::{DeleteParams, PostParams},
+    api::PostParams,
     core::ObjectMeta,
-    runtime::{conditions::is_deleted, wait::await_condition},
-    Api, ResourceExt,
-};
+    runtime::wait::await_condition,
+    Api, };
 mod common;
 
 use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
 #[tokio::test]
 async fn test_basic() {
-    let client = common::get_kube_client().await;
+    let client: kube::Client = common::get_kube_client().await;
     // setup cpng needs to come before install crds, as crds waits for cpng's crds to be ready
     common::setup_cnpg(&client).await;
     common::instal_crds(&client).await;
     let dbname = "my-db";
     let database_server = "my-db-cluster";
 
-    let namespace = ScopedNamespace::new(client.clone(), "dbman-test".into()).await;
+    let namespace = ScopedNamespace::new(client.clone(), "dbman-test-basic".into()).await;
     let handle = DatabaseServerHandle::new(&client, namespace.name.clone()).await;
 
     let (dbc, conn) = handle.connect(&client).await;
@@ -89,16 +88,7 @@ async fn test_basic() {
     assert_eq!(1, result.len());
 
     // namespace cleanup doesn't handle missing finalizers yet.  just delete the object for now
-    db_api
-        .delete(dbname, &DeleteParams::default())
-        .await
-        .unwrap();
-    let uid = db_object.uid().unwrap();
-    let deleted = await_condition(db_api.clone(), dbname, is_deleted(&uid));
-    let _ = tokio::time::timeout(std::time::Duration::from_secs(300), deleted)
-        .await
-        .unwrap()
-        .expect("timed out deleting api");
+    common::delete_db_object(&db_api, &db_object).await;
 
     let result = dbc
         .query(

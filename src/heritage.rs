@@ -18,14 +18,14 @@ impl Heritage {
         }
     }
     pub fn validate(&self, database: &str, heritage_string: &str) -> Result<(), Error> {
-        let compare = serde_json::from_str::<Heritage>(&heritage_string)
+        let compare = serde_json::from_str::<Heritage>(heritage_string)
             .map_err(|e| Error::FailedToDeserializeHeritage(Box::new(e), database.into()))?;
         if self.heritage != compare.heritage {
             return Err(HeritageValidation(
                 "".into(),
                 "heritage".into(),
                 "dbman".into(),
-                compare.heritage.into(),
+                compare.heritage,
             ));
         }
         if self.namespace != compare.namespace {

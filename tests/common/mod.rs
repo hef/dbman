@@ -237,6 +237,9 @@ impl DatabaseServerHandle {
         let dbs_api = Api::<controller::DatabaseServer>::namespaced(client.clone(), &namespace);
         dbs_api.create(&PostParams::default(), &dbs).await.unwrap();
     }
+    pub fn get_port(&self) -> u16 {
+        self.port
+    }
 }
 
 #[must_use]
@@ -271,6 +274,19 @@ pub fn is_deployment_available() -> impl Condition<Deployment> {
         }
         false
     }
+}
+
+pub async fn delete_db_object(api: &Api<Database>, db_object: &Database) {
+    let dbname = db_object.name_any();
+    api.delete(dbname.as_str(), &DeleteParams::default())
+        .await
+        .unwrap();
+    let uid = db_object.uid().unwrap();
+    let deleted = await_condition(api.clone(), dbname.as_str(), is_deleted(&uid));
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(30), deleted)
+        .await
+        .unwrap()
+        .expect("timed out deleting api");
 }
 
 pub struct ScopedNamespace {

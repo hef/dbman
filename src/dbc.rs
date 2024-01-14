@@ -137,7 +137,11 @@ impl Dbc {
         Ok(())
     }
 
-    pub async fn apply_heritage_to_database(&self, database_name: &str, heritage: &Heritage) -> Result<(), Error> {
+    pub async fn apply_heritage_to_database(
+        &self,
+        database_name: &str,
+        heritage: &Heritage,
+    ) -> Result<(), Error> {
         let heritage_text = serde_json::to_string(heritage)
             .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database_name.into()))?;
         //let heritage_text = "sup";
@@ -154,7 +158,11 @@ impl Dbc {
         Ok(())
     }
 
-    pub async fn apply_heritage_to_role(&self, role_name: &str, heritage: &Heritage) -> Result<(), Error> {
+    pub async fn apply_heritage_to_role(
+        &self,
+        role_name: &str,
+        heritage: &Heritage,
+    ) -> Result<(), Error> {
         let heritage_text = serde_json::to_string(heritage)
             .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), role_name.into()))?;
         //let heritage_text = "sup";
@@ -183,12 +191,20 @@ impl Dbc {
         if result.len() != 1 {
             return Err(Error::MissingHeritage(
                 database_name.into(),
-                serde_json::to_string(heritage)
-                    .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database_name.into()))?,
+                serde_json::to_string(heritage).map_err(|e| {
+                    Error::FailedToSerializeHeritage(Box::new(e), database_name.into())
+                })?,
             ));
         }
         let description: String = result[0].get(0);
-        heritage.validate(&database_name, &description)?;
+        heritage
+            .validate(database_name, &description)
+            .map_err(|e| match e {
+                Error::HeritageValidation(database_name, field, value, expected) => {
+                    Error::DatabaseHeritageValidation(database_name, field, value, expected)
+                }
+                _ => e,
+            })?;
         Ok(())
     }
 
@@ -209,8 +225,14 @@ impl Dbc {
             ));
         }
         let description: String = result[0].get(0);
-        heritage.validate(&role_name, &description)?;
+        heritage
+            .validate(role_name, &description)
+            .map_err(|e| match e {
+                Error::HeritageValidation(role_name, field, value, expected) => {
+                    Error::RoleHeritageValidation(role_name, field, value, expected)
+                }
+                _ => e,
+            })?;
         Ok(())
     }
 }
-

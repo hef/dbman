@@ -23,6 +23,9 @@ pub enum Error {
     #[error("Tokio Postgres Error: {0}")]
     TokioPostgresError(#[source] Box<tokio_postgres::Error>),
 
+    #[error("DatabaseServer {0}/{1} conn_string needs to specify a an existing dbname, usually `postgres`, or `template1`.  Alterantively, a database name with the same name as the Role will work.")]
+    DatabaseServerNeedsToSpecifyAnExistingDbName(String, String),
+
     #[error("Error acquring lock")]
     LockError(String),
 
@@ -53,8 +56,14 @@ pub enum Error {
     #[error("Database {0} is missing comment {1}")]
     MissingHeritage(String, String),
 
-    #[error("Database {0} failed validation. {1} has value {2}, expected {3}")]
+    #[error("DB Object {0} failed validation. {1} has value {2}, expected {3}")]
     HeritageValidation(String, String, String, String),
+
+    #[error("Database {0} failed validation. {1} has value {2}, expected {3}")]
+    DatabaseHeritageValidation(String, String, String, String),
+
+    #[error("Role {0} failed validation. {1} has value {2}, expected {3}")]
+    RoleHeritageValidation(String, String, String, String),
 }
 
 impl From<kube::Error> for Error {
