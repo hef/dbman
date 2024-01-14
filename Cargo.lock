@@ -604,7 +604,7 @@ checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
 
 [[package]]
 name = "dbman"
-version = "0.118.0"
+version = "0.119.0"
 dependencies = [
  "actix-web",
  "anyhow",
