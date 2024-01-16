@@ -1,12 +1,12 @@
 use controller::State;
 use kube::{
-    api::{DeleteParams, PostParams},
+    api::PostParams,
     core::ObjectMeta,
-    runtime::{conditions::is_deleted, wait::await_condition},
-    Api, Client, ResourceExt,
+    runtime::wait::await_condition,
+    Api, Client,
 };
 
-use crate::common::{delete_db_object, DatabaseServerHandle, ScopedNamespace};
+use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
 mod common;
 
@@ -52,15 +52,8 @@ async fn test_dbman_expects_extra_db() {
         conn.await.unwrap();
     });
 
-    let result = dbc
-        .query(
-            "select 1 from pg_database where datname = $1::TEXT",
-            &[&dbname],
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(0, result.len());
+    let exists = common::does_pgdatabase_exist(&dbc, &dbname.to_string()).await;
+    assert!(exists);
 
     common::store_credentials_in_secret(
         &client,

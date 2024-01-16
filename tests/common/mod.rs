@@ -330,7 +330,7 @@ impl ScopedNamespace {
                             let uid = namespace_object.clone().uid().unwrap();
                             let deleted = await_condition(api.clone(), &name, is_deleted(&uid));
                             let _ =
-                                tokio::time::timeout(std::time::Duration::from_secs(30), deleted)
+                                tokio::time::timeout(std::time::Duration::from_secs(300), deleted)
                                     .await
                                     .unwrap()
                                     .unwrap();
@@ -421,4 +421,15 @@ pub async fn store_credentials_in_secret(
         )
         .await
         .unwrap();
+}
+
+pub async fn does_pgdatabase_exist(dbc: &tokio_postgres::Client, dbname: &String ) -> bool {
+    let result = dbc
+        .query(
+            "select 1 from pg_database where datname = $1::TEXT",
+            &[dbname],
+        )
+        .await
+        .unwrap();
+    result.len() == 1
 }

@@ -609,6 +609,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "clap",
+ "dbman",
  "env_logger",
  "futures",
  "http 1.0.0",

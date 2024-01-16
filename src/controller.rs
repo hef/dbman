@@ -83,6 +83,8 @@ pub struct Context {
 
 impl Context {}
 
+
+
 async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     let ns = db
         .namespace()
@@ -235,6 +237,11 @@ impl Database {
         .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
 
         Ok((username, password))
+    }
+    
+    #[cfg(feature = "test-utils")]
+    pub async fn z_reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
+        self.reconcile(ctx).await
     }
 
     async fn reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
