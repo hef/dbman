@@ -6,7 +6,9 @@ use crate::common::{ScopedNamespace, DatabaseServerHandle};
 
 
 mod common;
-
+// https://github.com/hef/dbman/issues/75
+// The issue is dbman failing to create a database that is deleted out of band.
+// This test passes with no changes, not sure what is going on yet.
 #[tokio::test]
 async fn test_recreate_deleted_db() {
     let client: kube::Client = common::get_kube_client().await;
