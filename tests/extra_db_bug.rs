@@ -53,7 +53,7 @@ async fn test_dbman_expects_extra_db() {
     });
 
     let exists = common::does_pgdatabase_exist(&dbc, &dbname.to_string()).await;
-    assert!(exists);
+    assert!(!exists);
 
     common::store_credentials_in_secret(
         &client,
