@@ -77,7 +77,7 @@ spec:
 
 # Breaking Changes
 
-## v0.119.0 introduces a number of breaking changes, and a new version of the CRD.
+## v0.120.0 introduces a number of breaking changes, and a new version of the CRD.
 
 ### Database/v1alpha2 -> Database/v1alpha3
 
