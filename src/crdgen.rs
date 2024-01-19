@@ -1,4 +1,5 @@
 pub use controller::Database;
+pub use controller::DatabaseServer;
 use kube::CustomResourceExt;
 
 fn main() {

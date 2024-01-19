@@ -1,10 +1,11 @@
 use crate::{
     condition::{Reason, Status, Type},
+    credentials::Credentials,
+    database_server::DatabaseServer,
     dbc::Dbc,
     Error, Result,
 };
 use k8s_openapi::{
-    api::core::v1::Secret,
     apimachinery::pkg::apis::meta::v1::{Condition, Time},
     chrono::{DateTime, Utc},
 };
@@ -36,39 +37,30 @@ pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 #[derive(CustomResource, Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
 #[kube(
     group = "dbman.hef.sh",
-    version = "v1alpha1",
-    kind = "DatabaseServer",
-    plural = "databaseservers",
-    namespaced
-)]
-pub struct DatabaseServerSpec {
-    pub conn_string: String,
-    pub superuser_secret: String,
-}
-
-#[derive(CustomResource, Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-#[kube(
-    group = "dbman.hef.sh",
-    version = "v1alpha2",
+    version = "v1alpha3",
     kind = "Database",
     plural = "databases",
     status = "DatabaseStatus",
     namespaced
 )]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseSpec {
     pub database_server_ref: DatabaseServerRef,
     pub database_name: String,
-    pub credentials_secret: String,
+    pub credentials: Option<Credentials>,
+    pub owner_ref: Option<String>, // todo: credentials, credentials_secret, and owner_ref are mutually exclusive
     /// should we delete the database when the resource is deleted? Default true
     pub prune: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseServerRef {
     pub name: String,
     pub namespace: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DatabaseStatus {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schemars(schema_with = "crate::condition::schema")]
@@ -82,8 +74,6 @@ pub struct Context {
 }
 
 impl Context {}
-
-
 
 async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     let ns = db
@@ -192,53 +182,14 @@ impl Database {
         Ok(dbc)
     }
     async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
-        let namespace = self
-            .namespace()
-            .ok_or(Error::MissingNamespace(self.name_any()))?;
-        let secret_name = self.spec.credentials_secret.as_ref();
-        let secret = Api::<Secret>::namespaced(client.clone(), &namespace)
-            .get(secret_name)
-            .await?;
-
-        let username = String::from_utf8(
-            secret
-                .data
-                .as_ref()
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "username".to_owned(),
-                ))?
-                .get("username")
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "username".to_owned(),
-                ))?
-                .0
-                .clone(),
-        )
-        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
-
-        let password = String::from_utf8(
-            secret
-                .data
-                .as_ref()
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "password".to_owned(),
-                ))?
-                .get("password")
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "password".to_owned(),
-                ))?
-                .0
-                .clone(),
-        )
-        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
-
-        Ok((username, password))
+        self.spec
+            .credentials
+            .as_ref()
+            .ok_or(Error::MissingCredentials(self.name_any()))?
+            .get_credentials(client, self.namespace().unwrap().as_str())
+            .await
     }
-    
+
     #[cfg(feature = "test-utils")]
     pub async fn z_reconcile(&self, ctx: Arc<Context>) -> Result<Action> {
         self.reconcile(ctx).await
@@ -391,55 +342,7 @@ impl Database {
     }
 }
 
-impl DatabaseServer {
-    async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
-        let namespace = self
-            .namespace()
-            .ok_or(Error::MissingNamespace(self.name_any()))?;
-        let secret_name = self.spec.superuser_secret.as_ref();
-        let secret = Api::<Secret>::namespaced(client.clone(), &namespace)
-            .get(secret_name)
-            .await?;
 
-        let username = String::from_utf8(
-            secret
-                .data
-                .as_ref()
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "username".to_owned(),
-                ))?
-                .get("username")
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "username".to_owned(),
-                ))?
-                .0
-                .clone(),
-        )
-        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
-
-        let password = String::from_utf8(
-            secret
-                .data
-                .as_ref()
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "password".to_owned(),
-                ))?
-                .get("password")
-                .ok_or(Error::SecretMissingKey(
-                    secret_name.to_owned(),
-                    "password".to_owned(),
-                ))?
-                .0
-                .clone(),
-        )
-        .map_err(|e| Error::SecretDidNotContainValidUTF8(secret_name.to_owned(), e.to_string()))?;
-
-        Ok((username, password))
-    }
-}
 #[derive(Clone, Serialize)]
 pub struct Diagnostics {
     #[serde(deserialize_with = "from_ts")]

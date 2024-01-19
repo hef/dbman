@@ -16,26 +16,28 @@ Create 2 resource: a DatabaseServer to point to a postgres cluster, and a Databa
 e.g.
 
 ```yaml
-apiVersion: dbman.hef.sh/v1alpha1
+apiVersion: dbman.hef.sh/v1alpha2
 kind: DatabaseServer
 metadata:
   name: postgres
   namespace: database
 spec:
   conn_string: "host=postgres-rw.database"
-  superuser_secret: superuser-secret
+  credentials:
+    basicAuthSecretRef: superuser-secret
 ```
 
 ```yaml
-apiVersion: dbman.hef.sh/v1alpha2
+apiVersion: dbman.hef.sh/v1alpha3
 kind: Database
 metadata:
   name: db1
   namespace: database
 spec:
-  credentials_secret: db1-credentials
-  database_name: db1
-  database_server_ref:
+  credentials:
+    basicAuthSecretRef: db1-credentials
+  databaseName: db1
+  databaseServerRef:
     namespace: database
     name: postgres
 ```
@@ -72,6 +74,25 @@ spec:
     name: postgres
   prune: false
 ```
+
+# Breaking Changes
+
+## v0.120.0 introduces a number of breaking changes, and a new version of the CRD.
+
+### Database/v1alpha2 -> Database/v1alpha3
+
+The following spec fields have been renamed:
+
+ * `credentials_secret` -> `credentials.basicAuthSecretRef`
+ * `database_name` -> `databaseName`
+ * `database_server_ref` -> `databaseServerRef`
+
+### DatabaseServer/v1alpha1 -> DatabaseServer/v1alpha2
+
+The following spec fields have been renamed:
+
+ * `credentials_secret` -> `credentials.basicAuthSecretRef`
+ * `conn_string` -> `connString`
 
 ## Testing
 The integration tests require a kind cluster.

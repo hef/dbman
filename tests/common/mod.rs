@@ -230,7 +230,10 @@ impl DatabaseServerHandle {
             },
             spec: controller::DatabaseServerSpec {
                 conn_string: format!("host=localhost port={port}"),
-                superuser_secret: "db-superuser".into(),
+                credentials: controller::Credentials {
+                    basic_auth_secret_ref: Some("db-superuser".into()),
+                    ..Default::default()
+                },
             },
         };
 
@@ -423,7 +426,7 @@ pub async fn store_credentials_in_secret(
         .unwrap();
 }
 
-pub async fn does_pgdatabase_exist(dbc: &tokio_postgres::Client, dbname: &String ) -> bool {
+pub async fn does_pgdatabase_exist(dbc: &tokio_postgres::Client, dbname: &String) -> bool {
     let result = dbc
         .query(
             "select 1 from pg_database where datname = $1::TEXT",

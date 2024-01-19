@@ -1,10 +1,5 @@
 use controller::State;
-use kube::{
-    api::PostParams,
-    core::ObjectMeta,
-    runtime::wait::await_condition,
-    Api, Client,
-};
+use kube::{api::PostParams, core::ObjectMeta, runtime::wait::await_condition, Api, Client};
 
 use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
@@ -26,7 +21,10 @@ async fn create_database_server(
         },
         spec: controller::DatabaseServerSpec {
             conn_string: format!("host=localhost port={port}"),
-            superuser_secret: secret_name,
+            credentials: controller::Credentials {
+                basic_auth_secret_ref: Some(secret_name),
+                ..Default::default()
+            },
         },
     };
 
@@ -103,8 +101,12 @@ async fn test_dbman_expects_extra_db() {
                 namespace: Some(namespace.name.clone()),
             },
             database_name: dbname.into(),
-            credentials_secret: "my-db-credentials".into(),
+            credentials: Some(controller::Credentials {
+                basic_auth_secret_ref: Some("my-db-credentials".into()),
+                ..Default::default()
+            }),
             prune: Some(true),
+            ..Default::default()
         },
         status: Some(controller::DatabaseStatus { conditions: vec![] }),
     };

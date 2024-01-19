@@ -4,11 +4,15 @@
 #![warn(clippy::panic)]
 mod condition;
 mod controller;
+mod credentials;
+mod database_server;
 mod heritage;
 
 use std::sync::RwLockReadGuard;
 
 pub use crate::controller::*;
+pub use crate::database_server::*;
+pub use crate::credentials::*;
 
 use thiserror::Error;
 
@@ -64,6 +68,29 @@ pub enum Error {
 
     #[error("Role {0} failed validation. {1} has value {2}, expected {3}")]
     RoleHeritageValidation(String, String, String, String),
+
+    #[error("basicAuthSecretRef is mutually exclusive with other credential fields")]
+    BasicAuthSecretRefIsMutuallyExclusiveWithOtherCredentialFields(),
+
+    #[error(
+        "username field is mutually exclusive with usernameConfigRef and usernameSecretRef fields"
+    )]
+    UsernameFieldIsMutuallyExclusiveWithUsernameConfigRefAndUsernameSecretRefFields(),
+
+    #[error("usernameConfigRef and usernameSecretRef fields are mutually exclusive")]
+    UsernameConfigRefAndUsernameSecretRefFieldsAreMutuallyExclusive(),
+
+    #[error("passwordSecretRef field is required when username field is set")]
+    PasswordSecretRefFieldIsRequiredWhenUsernameFieldIsSet(),
+
+    #[error("passwordSecretRef field is required when usernameConfigRef field is set")]
+    PasswordSecretRefFieldIsRequiredWhenUsernameConfigRefFieldIsSet(),
+
+    #[error("passwordSecretRef field is required when usernameSecretRef field is set")]
+    PasswordSecretRefFieldIsRequiredWhenUsernameSecretRefFieldIsSet(),
+
+    #[error("{0} Missing Credentials")]
+    MissingCredentials(String),
 }
 
 impl From<kube::Error> for Error {

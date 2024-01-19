@@ -1,9 +1,8 @@
 use controller::State;
-use kube::{core::ObjectMeta, Api, api::PostParams};
+use kube::{api::PostParams, core::ObjectMeta, Api};
 use postgres_protocol::escape::escape_identifier;
 
-use crate::common::{ScopedNamespace, DatabaseServerHandle};
-
+use crate::common::{DatabaseServerHandle, ScopedNamespace};
 
 mod common;
 // https://github.com/hef/dbman/issues/75
@@ -56,8 +55,12 @@ async fn test_recreate_deleted_db() {
                 namespace: Some(namespace.name.clone()),
             },
             database_name: dbname.into(),
-            credentials_secret: "my-db-credentials".into(),
+            credentials: Some(controller::Credentials {
+                basic_auth_secret_ref: Some("my-db-credentials".into()),
+                ..Default::default()
+            }),
             prune: Some(true),
+            ..Default::default()
         },
         status: Some(controller::DatabaseStatus { conditions: vec![] }),
     };
@@ -73,16 +76,17 @@ async fn test_recreate_deleted_db() {
     assert!(exists);
 
     // delete the database OOB
-    dbc.execute(&format!("drop database {}", escape_identifier(dbname)), &[]).await.expect("dropping database manually");
+    dbc.execute(&format!("drop database {}", escape_identifier(dbname)), &[])
+        .await
+        .expect("dropping database manually");
 
     let exists = common::does_pgdatabase_exist(&dbc, &dbname.to_string()).await;
     assert!(!exists);
-    
+
     let db = db_api.get(dbname).await.expect("database cr exists");
     let z = db.z_reconcile(ctx).await;
     assert!(z.is_ok());
 
     let exists = common::does_pgdatabase_exist(&dbc, &dbname.to_string()).await;
     assert!(exists);
-
 }

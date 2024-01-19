@@ -144,7 +144,6 @@ impl Dbc {
     ) -> Result<(), Error> {
         let heritage_text = serde_json::to_string(heritage)
             .map_err(|e| Error::FailedToSerializeHeritage(Box::new(e), database_name.into()))?;
-        //let heritage_text = "sup";
         self.client
             .execute(
                 &format!(

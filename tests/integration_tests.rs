@@ -1,9 +1,5 @@
 use controller::State;
-use kube::{
-    api::PostParams,
-    core::ObjectMeta,
-    runtime::wait::await_condition,
-    Api, };
+use kube::{api::PostParams, core::ObjectMeta, runtime::wait::await_condition, Api};
 mod common;
 
 use crate::common::{DatabaseServerHandle, ScopedNamespace};
@@ -60,8 +56,12 @@ async fn test_basic() {
                 namespace: Some(namespace.name.clone()),
             },
             database_name: dbname.into(),
-            credentials_secret: "my-db-credentials".into(),
+            credentials: Some(controller::Credentials {
+                basic_auth_secret_ref: Some("my-db-credentials".into()),
+                ..Default::default()
+            }),
             prune: Some(true),
+            ..Default::default()
         },
         status: Some(controller::DatabaseStatus { conditions: vec![] }),
     };
