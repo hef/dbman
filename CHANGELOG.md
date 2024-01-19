@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.120.0](https://github.com/hef/dbman/compare/v0.119.0...v0.120.0) (2024-01-19)
+
+
+### Features
+
+* **doc:** documenting crd changes ([b3ded2e](https://github.com/hef/dbman/commit/b3ded2ef878bea5a5b339a933456fca494898c4d))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate clap to 4.4.17 ([97774e0](https://github.com/hef/dbman/commit/97774e087a7754226682e875aae4277574687a71))
+* **deps:** update rust crate clap to 4.4.18 ([67611bb](https://github.com/hef/dbman/commit/67611bb1f64876f8528874d469ad99d64b97e11a))
+* **deps:** update rust crate env_logger to 0.10.2 ([27bab1b](https://github.com/hef/dbman/commit/27bab1b67af6e1418707e3411773cdb8e2dd30d3))
+* **doc:** fixing crd change version ([762decd](https://github.com/hef/dbman/commit/762decd4e6987c1433576b9bbf5226cb75c3c88e))
+* **test:** adding a recreate dropped database test ([ad57116](https://github.com/hef/dbman/commit/ad571161d70601f14545d8a40ae334945ca6e5d7))
+* **test:** fixing database existance test  in extra_db test ([19d80e7](https://github.com/hef/dbman/commit/19d80e7dde38384bfbe4bf171887347adf79ec76))
+
 ## [0.119.0](https://github.com/hef/dbman/compare/v0.118.0...v0.119.0) (2024-01-14)
 
 
