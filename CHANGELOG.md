@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.0](https://github.com/hef/dbman/compare/v0.120.0...v0.121.0) (2024-01-20)
+
+
+### Features
+
+* **helm:** add crds.enabled to helm chart ([5fb5c21](https://github.com/hef/dbman/commit/5fb5c21f140b5f0ecf09ef1ccab29cb6f951c5ab))
+
 ## [0.120.0](https://github.com/hef/dbman/compare/v0.119.0...v0.120.0) (2024-01-19)
 
 
