@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::Error::HeritageValidation;
-use crate::{Database, Error};
+use crate::{v1alpha3::Database, Error};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Heritage {

@@ -7,12 +7,20 @@ mod controller;
 mod credentials;
 mod database_server;
 mod heritage;
+pub mod v1alpha1;
+pub mod v1alpha2;
+pub mod v1alpha3;
 
 use std::sync::RwLockReadGuard;
 
 pub use crate::controller::*;
-pub use crate::credentials::*;
-pub use crate::database_server::*;
+pub use crate::v1alpha2::DatabaseServer;
+pub use crate::v1alpha2::DatabaseServerSpec;
+pub use crate::v1alpha3::Credentials;
+pub use crate::v1alpha3::Database;
+pub use crate::v1alpha3::DatabaseServerRef;
+pub use crate::v1alpha3::DatabaseSpec;
+pub use crate::v1alpha3::DatabaseStatus;
 
 use thiserror::Error;
 

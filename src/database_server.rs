@@ -1,24 +1,7 @@
-use kube::{Client, CustomResource, ResourceExt};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use kube::{Client, ResourceExt};
+use crate::{v1alpha2, Error, Result};
 
-use crate::{credentials::Credentials, Error, Result};
-
-#[derive(CustomResource, Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-#[kube(
-    group = "dbman.hef.sh",
-    version = "v1alpha2",
-    kind = "DatabaseServer",
-    plural = "databaseservers",
-    namespaced
-)]
-#[serde(rename_all = "camelCase")]
-pub struct DatabaseServerSpec {
-    pub conn_string: String,
-    pub credentials: Credentials,
-}
-
-impl DatabaseServer {
+impl v1alpha2::DatabaseServer {
     pub async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
         let namespace = self
             .namespace()

@@ -1,7 +1,9 @@
 use clap::command;
 use clap::Parser;
-pub use controller::Database;
-pub use controller::DatabaseServer;
+use controller::v1alpha1;
+use controller::v1alpha2;
+use controller::v1alpha3;
+use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use kube::CustomResourceExt;
 
 #[derive(Parser, Debug)]
@@ -15,18 +17,25 @@ fn main() {
     let args = Args::parse();
 
     if args.for_helm {
-        let pre = "{{- if .Values.crds.enabled }}";
-        let post = "{{- end }}";
-        print!(
-            "{pre}\n{}\n{post}\n---\n{pre}\n{}\n{post}",
-            serde_yaml::to_string(&controller::Database::crd()).unwrap(),
-            serde_yaml::to_string(&controller::DatabaseServer::crd()).unwrap()
+        println!("{{- if .Values.crds.enabled }}")
+    }
+
+    let crds: Vec<CustomResourceDefinition> = vec![
+        // old
+        v1alpha1::DatabaseServer::crd(),
+        v1alpha2::Database::crd(),
+        // current
+        v1alpha3::Database::crd(),
+        v1alpha2::DatabaseServer::crd(),
+    ];
+    crds.iter().for_each(|crd| {
+        println!(
+            "{}\n---\n",
+            serde_yaml::to_string(&crd).expect("failed to serialize crd")
         )
-    } else {
-        print!(
-            "{}\n---\n{}",
-            serde_yaml::to_string(&controller::Database::crd()).unwrap(),
-            serde_yaml::to_string(&controller::DatabaseServer::crd()).unwrap()
-        )
+    });
+
+    if args.for_helm {
+        println!("{{- end }}")
     }
 }

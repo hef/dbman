@@ -1,35 +1,12 @@
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::Secret;
 use kube::Client;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
+use crate::v1alpha3;
 use crate::Error;
 use crate::Result;
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-pub struct ConfigMapRef {
-    pub name: String,
-    pub key: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-pub struct SecretRef {
-    pub name: String,
-    pub key: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct Credentials {
-    pub basic_auth_secret_ref: Option<String>,
-    pub username: Option<String>,
-    pub username_config_map_ref: Option<ConfigMapRef>,
-    pub username_secret_ref: Option<SecretRef>,
-    pub password_secret_ref: Option<SecretRef>,
-}
-
-impl Credentials {
+impl v1alpha3::Credentials {
     fn validate(&self) -> Result<(), Error> {
         if self.basic_auth_secret_ref.is_some()
             && (self.username.is_some()
@@ -58,7 +35,7 @@ impl Credentials {
     ) -> Result<(String, String)> {
         self.validate()?;
         if let Some(basic_auth_secret_ref) = self.basic_auth_secret_ref.clone() {
-            let mut secret_ref = SecretRef {
+            let mut secret_ref = v1alpha3::SecretRef {
                 name: basic_auth_secret_ref,
                 key: "username".into(),
             };
@@ -109,7 +86,7 @@ impl Credentials {
         &self,
         client: &Client,
         namespace: &str,
-        secret_ref: &SecretRef,
+        secret_ref: &v1alpha3::SecretRef,
     ) -> Result<String> {
         let api = kube::Api::<Secret>::namespaced(client.clone(), namespace);
         let secret = api.get(&secret_ref.name).await?;
@@ -135,7 +112,7 @@ impl Credentials {
     async fn get_config_value(
         client: &Client,
         namespace: &str,
-        config_ref: &ConfigMapRef,
+        config_ref: &v1alpha3::ConfigMapRef,
     ) -> Result<String> {
         let api = kube::Api::<ConfigMap>::namespaced(client.clone(), namespace);
         let config_map = api.get(&config_ref.name).await?;

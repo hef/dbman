@@ -1,8 +1,9 @@
 use crate::{
     condition::{Reason, Status, Type},
-    credentials::Credentials,
-    database_server::DatabaseServer,
     dbc::Dbc,
+    v1alpha2::DatabaseServer,
+    v1alpha3,
+    v1alpha3::Credentials,
     Error, Result,
 };
 use k8s_openapi::{
@@ -26,46 +27,12 @@ use kube::{
         watcher::Config,
         Controller,
     },
-    Api, Client, CustomResource, Resource, ResourceExt,
+    Api, Client, Resource, ResourceExt,
 };
 use log::info;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
-
-#[derive(CustomResource, Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-#[kube(
-    group = "dbman.hef.sh",
-    version = "v1alpha3",
-    kind = "Database",
-    plural = "databases",
-    status = "DatabaseStatus",
-    namespaced
-)]
-#[serde(rename_all = "camelCase")]
-pub struct DatabaseSpec {
-    pub database_server_ref: DatabaseServerRef,
-    pub database_name: String,
-    pub credentials: Option<Credentials>,
-    pub owner_ref: Option<String>, // todo: credentials, credentials_secret, and owner_ref are mutually exclusive
-    /// should we delete the database when the resource is deleted? Default true
-    pub prune: Option<bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct DatabaseServerRef {
-    pub name: String,
-    pub namespace: Option<String>,
-}
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct DatabaseStatus {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[schemars(schema_with = "crate::condition::schema")]
-    pub conditions: Vec<Condition>,
-}
 
 #[derive(Clone)]
 pub struct Context {
@@ -75,11 +42,11 @@ pub struct Context {
 
 impl Context {}
 
-async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
+async fn reconcile(db: Arc<v1alpha3::Database>, ctx: Arc<Context>) -> Result<Action> {
     let ns = db
         .namespace()
         .ok_or(Error::MissingNamespace(db.name_any()))?;
-    let dbs: Api<Database> = Api::namespaced(ctx.client.clone(), &ns);
+    let dbs: Api<v1alpha3::Database> = Api::namespaced(ctx.client.clone(), &ns);
 
     info!("Reconciling Database \"{}\" in {}", db.name_any(), ns);
     finalizer(&dbs, DATABASE_FINALIZER, db, |event| async {
@@ -146,12 +113,12 @@ async fn reconcile(db: Arc<Database>, ctx: Arc<Context>) -> Result<Action> {
     .map_err(|e| Error::FinalizerError(Box::new(e)))
 }
 
-fn error_policy(_database: Arc<Database>, error: &Error, _ctx: Arc<Context>) -> Action {
+fn error_policy(_database: Arc<v1alpha3::Database>, error: &Error, _ctx: Arc<Context>) -> Action {
     warn!("reconcile failed: {:?}", error);
     Action::requeue(Duration::from_secs(5 * 60))
 }
 
-impl Database {
+impl v1alpha3::Database {
     async fn dbc(&self, client: &Client) -> Result<Dbc> {
         //todo:
         let database_server_namespace = self
@@ -290,7 +257,7 @@ impl Database {
                 "conditions": [condition]
             }
         }));
-        let api = Api::<Database>::namespaced(
+        let api = Api::<v1alpha3::Database>::namespaced(
             client.clone(),
             &self
                 .namespace()
@@ -360,7 +327,7 @@ impl Default for Diagnostics {
 }
 
 impl Diagnostics {
-    fn recorder(&self, client: Client, db: &Database) -> Recorder {
+    fn recorder(&self, client: Client, db: &v1alpha3::Database) -> Recorder {
         Recorder::new(client, self.reporter.clone(), db.object_ref(&()))
     }
 }
@@ -384,7 +351,7 @@ impl State {
 
 pub async fn run(state: State) -> Result<(), Error> {
     let client = Client::try_default().await?;
-    let databases = Api::<Database>::all(client.clone());
+    let databases = Api::<v1alpha3::Database>::all(client.clone());
 
     if let Err(e) = databases.list(&ListParams::default().limit(1)).await {
         error!("CRD is not queryable; {e:?}. Is the CRD installed?");
