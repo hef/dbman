@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.7](https://github.com/hef/dbman/compare/v0.121.6...v0.121.7) (2024-01-20)
+
+
+### Bug Fixes
+
+* **crd:** making sure only 1 crd version is set to storage ([1f37363](https://github.com/hef/dbman/commit/1f37363b85cc185c9f7638b4226c93db47b409b5))
+
 ## [0.121.6](https://github.com/hef/dbman/compare/v0.121.5...v0.121.6) (2024-01-20)
 
 
