@@ -16,15 +16,19 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+
+
     if args.for_helm {
-        println!("{{- if .Values.crds.enabled }}")
+        // escape `{` as `{{`.
+        // go template syntax is `{{- if .Values.crds.enabled }}`
+        println!("{{{{- if .Values.crds.enabled }}}}");
     }
 
     println!("---");
     let crds: Vec<CustomResourceDefinition> = vec![
         // old
-        v1alpha1::DatabaseServer::crd(),
-        v1alpha2::Database::crd(),
+        //v1alpha1::DatabaseServer::crd(),
+        //v1alpha2::Database::crd(),
         // current
         v1alpha3::Database::crd(),
         v1alpha2::DatabaseServer::crd(),
@@ -37,6 +41,6 @@ fn main() {
     });
 
     if args.for_helm {
-        println!("{{- end }}")
+        println!("{{{{- end }}}}")
     }
 }
