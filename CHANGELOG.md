@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.8](https://github.com/hef/dbman/compare/v0.121.7...v0.121.8) (2024-01-20)
+
+
+### Bug Fixes
+
+* **ci:** don't use helm for crds. ([d77704d](https://github.com/hef/dbman/commit/d77704d5750dca275c973ba49349a119214149a2))
+
 ## [0.121.7](https://github.com/hef/dbman/compare/v0.121.6...v0.121.7) (2024-01-20)
 
 
