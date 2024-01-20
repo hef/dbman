@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.2](https://github.com/hef/dbman/compare/v0.121.1...v0.121.2) (2024-01-20)
+
+
+### Bug Fixes
+
+* **crds:** add support for old crd versions ([6c724ea](https://github.com/hef/dbman/commit/6c724ea1696fcb95e9aafc1a7f3f9c35abfcd77e))
+
 ## [0.121.1](https://github.com/hef/dbman/compare/v0.121.0...v0.121.1) (2024-01-20)
 
 
