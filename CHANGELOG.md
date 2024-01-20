@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.4](https://github.com/hef/dbman/compare/v0.121.3...v0.121.4) (2024-01-20)
+
+
+### Bug Fixes
+
+* **helm:** fixing escaping `{{` in helm chart ([a40805a](https://github.com/hef/dbman/commit/a40805ab4291d2b41c1d83003382972a6ca19eac))
+
 ## [0.121.3](https://github.com/hef/dbman/compare/v0.121.2...v0.121.3) (2024-01-20)
 
 
