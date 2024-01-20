@@ -20,6 +20,7 @@ fn main() {
         println!("{{- if .Values.crds.enabled }}")
     }
 
+    println!("---");
     let crds: Vec<CustomResourceDefinition> = vec![
         // old
         v1alpha1::DatabaseServer::crd(),
@@ -29,7 +30,7 @@ fn main() {
         v1alpha2::DatabaseServer::crd(),
     ];
     crds.iter().for_each(|crd| {
-        println!(
+        print!(
             "{}\n---\n",
             serde_yaml::to_string(&crd).expect("failed to serialize crd")
         )
