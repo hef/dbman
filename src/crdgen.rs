@@ -15,8 +15,10 @@ fn main() {
     let args = Args::parse();
 
     if args.for_helm {
+        let pre = "{{- if .Values.crds.enabled }}";
+        let post = "{{- end }}";
         print!(
-            "{{- if .Values.crds.enabled }}\n{}\n---\n{}\n{{- end }}",
+            "{pre}\n{}\n{post}\n---\n{pre}\n{}\n{post}",
             serde_yaml::to_string(&controller::Database::crd()).unwrap(),
             serde_yaml::to_string(&controller::DatabaseServer::crd()).unwrap()
         )
