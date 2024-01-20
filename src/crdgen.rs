@@ -26,17 +26,19 @@ fn main() {
     }
     let mut database = v1alpha3::Database::crd();
 
-    let versions = vec![
+    let mut versions = vec![
         v1alpha3::Database::crd().spec.versions[0].clone(),
         v1alpha2::Database::crd().spec.versions[0].clone(),
     ];
+    versions[1].storage = false;
     database.spec.versions = versions;
 
     let mut database_server = v1alpha2::DatabaseServer::crd();
-    let versions = vec![
+    let mut versions = vec![
         v1alpha2::DatabaseServer::crd().spec.versions[0].clone(),
         v1alpha1::DatabaseServer::crd().spec.versions[0].clone(),
     ];
+    versions[1].storage = false;
     database_server.spec.versions = versions;
 
     println!("---");
