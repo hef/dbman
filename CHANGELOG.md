@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.121.1](https://github.com/hef/dbman/compare/v0.121.0...v0.121.1) (2024-01-20)
+
+
+### Bug Fixes
+
+* **ci:** stop uploading helm chart early ([9be01ff](https://github.com/hef/dbman/commit/9be01ffc0680c9cc038c9953347766192aaec604))
+* **ci:** updating cargo.lock ([27aa722](https://github.com/hef/dbman/commit/27aa722b06d57bc01e15cdbadfb3301a80e68a39))
+* **helm:** fix crd issue ([8f3f9f6](https://github.com/hef/dbman/commit/8f3f9f6f80b7cd5bd5797d1e167451ee16459dab))
+
 ## [0.121.0](https://github.com/hef/dbman/compare/v0.120.0...v0.121.0) (2024-01-20)
 
 
