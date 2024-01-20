@@ -27,8 +27,8 @@ fn main() {
     println!("---");
     let crds: Vec<CustomResourceDefinition> = vec![
         // old
-        //v1alpha1::DatabaseServer::crd(),
-        //v1alpha2::Database::crd(),
+        v1alpha1::DatabaseServer::crd(),
+        v1alpha2::Database::crd(),
         // current
         v1alpha3::Database::crd(),
         v1alpha2::DatabaseServer::crd(),
