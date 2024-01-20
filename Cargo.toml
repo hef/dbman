@@ -1,6 +1,6 @@
 [package]
 name = "dbman"
-version = "0.121.4"
+version = "0.121.5"
 edition = "2021"
 default-run = "controller"
 authors = ["hef"]
