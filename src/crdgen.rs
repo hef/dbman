@@ -4,7 +4,6 @@ use controller::v1alpha1;
 use controller::v1alpha2;
 use controller::v1alpha3;
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
-use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinitionVersion;
 use kube::CustomResourceExt;
 
 #[derive(Parser, Debug)]
@@ -16,8 +15,6 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-
-
 
     if args.for_helm {
         // escape `{` as `{{`.

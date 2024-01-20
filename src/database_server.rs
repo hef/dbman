@@ -1,5 +1,5 @@
-use kube::{Client, ResourceExt};
 use crate::{v1alpha2, Error, Result};
+use kube::{Client, ResourceExt};
 
 impl v1alpha2::DatabaseServer {
     pub async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {

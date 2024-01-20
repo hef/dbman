@@ -3,7 +3,6 @@ use crate::{
     dbc::Dbc,
     v1alpha2::DatabaseServer,
     v1alpha3,
-    v1alpha3::Credentials,
     Error, Result,
 };
 use k8s_openapi::{
@@ -153,7 +152,12 @@ impl v1alpha3::Database {
             .credentials
             .as_ref()
             .ok_or(Error::MissingCredentials(self.name_any()))?
-            .get_credentials(client, self.namespace().unwrap().as_str())
+            .get_credentials(
+                client,
+                self.namespace()
+                    .ok_or(Error::MissingNamespace(self.name_any()))?
+                    .as_str(),
+            )
             .await
     }
 
