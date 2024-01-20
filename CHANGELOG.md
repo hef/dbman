@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.121.3](https://github.com/hef/dbman/compare/v0.121.2...v0.121.3) (2024-01-20)
+
+
+### Bug Fixes
+
+* **crd:** fix crd gen ([16e379c](https://github.com/hef/dbman/commit/16e379c2ff26714908c74a491a890abdd81362e6))
+
 ## [0.121.2](https://github.com/hef/dbman/compare/v0.121.1...v0.121.2) (2024-01-20)
 
 
