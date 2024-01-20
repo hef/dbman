@@ -11,8 +11,8 @@ mod heritage;
 use std::sync::RwLockReadGuard;
 
 pub use crate::controller::*;
-pub use crate::database_server::*;
 pub use crate::credentials::*;
+pub use crate::database_server::*;
 
 use thiserror::Error;
 

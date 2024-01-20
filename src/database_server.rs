@@ -1,4 +1,4 @@
-use kube::{CustomResource, Client, ResourceExt};
+use kube::{Client, CustomResource, ResourceExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +23,9 @@ impl DatabaseServer {
         let namespace = self
             .namespace()
             .ok_or(Error::MissingNamespace(self.name_any()))?;
-        self.spec.credentials.get_credentials(client, &namespace).await
+        self.spec
+            .credentials
+            .get_credentials(client, &namespace)
+            .await
     }
 }

@@ -86,6 +86,7 @@ jobs:
         run: |
           mkdir charts/dbman/crds
           cargo run --bin crdgen > charts/dbman/crds/crds.yaml
+          cargo run --bin crdgen -- --for-helm > charts/dbman/templates/crds.yaml
       
       - name: Push Helm chart to OCI compatible registry (Github)
         uses: bsord/helm-push@v4.2.0

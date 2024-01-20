@@ -342,7 +342,6 @@ impl Database {
     }
 }
 
-
 #[derive(Clone, Serialize)]
 pub struct Diagnostics {
     #[serde(deserialize_with = "from_ts")]
