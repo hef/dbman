@@ -148,12 +148,29 @@ impl v1alpha3::Database {
         Ok(dbc)
     }
 
+    async fn get_credentials(&self, client: &Client,) -> Result<Option<(String, String)>, Error> {
+
+        if let Some(credentials) = &self.spec.credentials {
+            let namespace = self
+                .namespace()
+                .ok_or(Error::MissingNamespace(self.name_any()))?;
+
+            let pair = credentials
+                .get_credentials(client, namespace.as_str())
+                .await?;
+            Ok(Some(pair))
+        } else {
+            Ok(None)
+        }
+    }
+
     #[async_recursion] // it would be nice to not copy visited, like some immutable array type or something
-    async fn get_credentials(
+    async fn get_owner(
         &self,
         client: &Client,
         visited: Vec<String>,
-    ) -> Result<Option<(String, String)>, Error> {
+    ) -> Result<Option<String>, Error> {
+
         if let Some(other_db) = &self.spec.owner_ref {
             let namespace = self
                 .namespace()
@@ -169,7 +186,7 @@ impl v1alpha3::Database {
 
             visited.push(other_db.name_any());
 
-            return other_db.get_credentials(client, visited).await; // Pass visited as a reference
+            return other_db.get_owner(client, visited).await; // Pass visited as a reference
         }
 
         if let Some(credentials) = &self.spec.credentials {
@@ -177,10 +194,11 @@ impl v1alpha3::Database {
                 .namespace()
                 .ok_or(Error::MissingNamespace(self.name_any()))?;
 
-            let pair = credentials
+            let (owner, _) = credentials
+                // todo: don't get password, it might be an extra api lookup
                 .get_credentials(client, namespace.as_str())
                 .await?;
-            Ok(Some(pair))
+            Ok(Some(owner))
         } else {
             Ok(None)
         }
@@ -199,7 +217,7 @@ impl v1alpha3::Database {
 
         let mut owner: Option<String> = None;
 
-        if let Some((username, password)) = self.get_credentials(&client, Vec::new()).await? {
+        if let Some((username, password)) = self.get_credentials(&client).await? {
             owner = Some(username.clone());
             if !dbc.does_user_exist(&username).await? {
                 recorder
@@ -227,6 +245,10 @@ impl v1alpha3::Database {
                 dbc.validate_heritage_on_role(&username, &heritage).await?;
                 dbc.update_password(&username, &password).await?;
             }
+        }
+
+        if owner.is_none() {
+            owner = self.get_owner(&client, Vec::new()).await?;
         }
 
         let database_name = &self.spec.database_name;
