@@ -22,7 +22,7 @@ metadata:
   name: postgres
   namespace: database
 spec:
-  conn_string: "host=postgres-rw.database"
+  connString: "host=postgres-rw.database"
   credentials:
     basicAuthSecretRef: superuser-secret
 ```
@@ -45,7 +45,7 @@ spec:
 dbman will create a database with the name db1, and a role with username and password specified in db1-credentials
 
 
-## Heritage
+### Heritage
 
 dbman will add a pg comment to any database or role that it creates, and will refuse to modify or delete a database or
 role that does not have these comments, or that the comment doesn't match the k8s resource that is being reconciled.
@@ -53,7 +53,7 @@ role that does not have these comments, or that the comment doesn't match the k8
 Error Messages should contain the expected comment when the comment is missing or incorrect, you may apply it yourself 
 in order to adopt a database or role into dbman's management.
 
-## `prune` Flag
+### `prune` Flag
 
 by default, dbman will delete a database and role when the k8s resource gets deleted.  If you want to delete the 
 resource without delete the database and role, set the `prune: false` flag before deleting the resource.
@@ -67,7 +67,8 @@ metadata:
   name: db1
   namespace: database
 spec:
-  credentials_secret: db1-credentials
+  credentials:
+    basicAuthSecretRef: db1-credentials
   database_name: db1
   database_server_ref:
     namespace: database
@@ -75,11 +76,64 @@ spec:
   prune: false
 ```
 
-# Breaking Changes
+### specifying credentials
+    Both the Database CRD and databaseServer CRD have a `credentials` field, which can be used to specify the username and password for the database and role.
 
-## v0.120.0 introduces a number of breaking changes, and a new version of the CRD.
+```yaml
+  credentials:
+    basicAuthSecretRef: <secret>
+    username: <username>
+    usernameConfigMapRef:
+      name: <configmap>
+      key: <key>
+    usernameSecretRef:
+      name: <secret>
+      key: <key>
+    passwordSecretRef:
+      name: <secret>
+      key: <key>
+```
 
-### Database/v1alpha2 -> Database/v1alpha3
+* You can't specify [basicAuthSecretRef](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret) and any other field.
+* You can't specify `username` and/or `usernameConfigMapRef` and/or `usernameSecretRef`,
+* You you can't specify both `password` and `passwordSecretRef`.
+
+### Getting owner from another database CR
+
+You can specify the owner of the database and role by setting the `ownerRef` field to another database CR.
+
+```yaml
+apiVersion: dbman.hef.sh/v1alpha2
+kind: Database
+metadata:
+  name: db1
+  namespace: database
+spec:
+  credentials:
+    username: common-owner
+  passwordSecretRef: ... # omitted for brevity
+  database_name: db1
+  database_server_ref: ... # omitted for brevity
+---
+apiVersion: dbman.hef.sh/v1alpha2
+kind: Database
+metadata:
+  name: db2
+  namespace: database
+spec:
+  database_name: db2
+  database_server_ref: ... # omitted for brevity
+  ownerRef:
+    name: db1
+```
+
+In this example both db1 and db2 will have the same owner role `common-owner`.
+
+## Breaking Changes
+
+### v0.120.0 introduces a number of breaking changes, and a new version of the CRD.
+
+#### Database/v1alpha2 -> Database/v1alpha3
 
 The following spec fields have been renamed:
 
@@ -87,7 +141,7 @@ The following spec fields have been renamed:
  * `database_name` -> `databaseName`
  * `database_server_ref` -> `databaseServerRef`
 
-### DatabaseServer/v1alpha1 -> DatabaseServer/v1alpha2
+#### DatabaseServer/v1alpha1 -> DatabaseServer/v1alpha2
 
 The following spec fields have been renamed:
 
