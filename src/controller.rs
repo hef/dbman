@@ -4,6 +4,7 @@ use crate::{
     v1alpha2::DatabaseServer,
     v1alpha3, Error, Result,
 };
+use async_recursion::async_recursion;
 use k8s_openapi::{
     apimachinery::pkg::apis::meta::v1::{Condition, Time},
     chrono::{DateTime, Utc},
@@ -146,7 +147,31 @@ impl v1alpha3::Database {
             })?;
         Ok(dbc)
     }
-    async fn get_credentials(&self, client: &Client) -> Result<Option<(String, String)>, Error> {
+
+    #[async_recursion] // it would be nice to not copy visited, like some immutable array type or something
+    async fn get_credentials(
+        &self,
+        client: &Client,
+        visited: Vec<String>,
+    ) -> Result<Option<(String, String)>, Error> {
+        if let Some(other_db) = &self.spec.owner_ref {
+            let namespace = self
+                .namespace()
+                .ok_or(Error::MissingNamespace(self.name_any()))?;
+            let api: Api<v1alpha3::Database> = Api::namespaced(client.clone(), &namespace);
+            let other_db: v1alpha3::Database = api.get(other_db).await?;
+
+            let mut visited = visited.to_vec(); // Change the type of visited to Vec<String>
+
+            if visited.contains(&other_db.name_any()) {
+                return Err(Error::CircularDependency(visited.to_vec()));
+            }
+
+            visited.push(other_db.name_any());
+
+            return other_db.get_credentials(client, visited).await; // Pass visited as a reference
+        }
+
         if let Some(credentials) = &self.spec.credentials {
             let namespace = self
                 .namespace()
@@ -174,7 +199,7 @@ impl v1alpha3::Database {
 
         let mut owner: Option<String> = None;
 
-        if let Some((username, password)) = self.get_credentials(&client).await? {
+        if let Some((username, password)) = self.get_credentials(&client, Vec::new()).await? {
             owner = Some(username.clone());
             if !dbc.does_user_exist(&username).await? {
                 recorder
@@ -309,7 +334,7 @@ impl v1alpha3::Database {
                 })
                 .await?;
             dbc.drop_database(database_name).await?;
-            if let Some((owner, _)) = self.get_credentials(&ctx.client).await? {
+            if let Some((owner, _)) = self.get_credentials(&ctx.client, Vec::new()).await? {
                 recorder
                     .publish(Event {
                         type_: EventType::Normal,

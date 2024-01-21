@@ -99,6 +99,9 @@ pub enum Error {
 
     #[error("{0} Missing Credentials")]
     MissingCredentials(String),
+
+    #[error("Owner ref has a circular dependency")]
+    CircularDependency(Vec<String>),
 }
 
 impl From<kube::Error> for Error {
