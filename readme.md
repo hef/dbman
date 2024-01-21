@@ -69,14 +69,14 @@ metadata:
 spec:
   credentials:
     basicAuthSecretRef: db1-credentials
-  database_name: db1
-  database_server_ref:
+  databaseName: db1
+  databaseServerRef:
     namespace: database
     name: postgres
   prune: false
 ```
 
-### specifying credentials
+### Specifying Credentials
 
 Both the Database CRD and databaseServer CRD have a `credentials` field, which can be used to specify the username and password for the database and role.
 
@@ -95,9 +95,9 @@ Both the Database CRD and databaseServer CRD have a `credentials` field, which c
       key: <key>
 ```
 
-* You can't specify [basicAuthSecretRef](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret) and any other field.
-* You can't specify `username` and/or `usernameConfigMapRef` and/or `usernameSecretRef`,
-* You you can't specify both `password` and `passwordSecretRef`.
+* You can't specify [basicAuthSecretRef](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret) and any other field at the same time.
+* You can't specify `username` and/or `usernameConfigMapRef` and/or `usernameSecretRef` at the same time,
+* You you can't specify both `password` and `passwordSecretRef` at the same time.
 
 ### Getting owner from another database CR
 
@@ -111,11 +111,11 @@ metadata:
   name: db1
   namespace: database
 spec:
+  databaseName: db1
   credentials:
     username: common-owner
   passwordSecretRef: ... # omitted for brevity
-  database_name: db1
-  database_server_ref: ... # omitted for brevity
+  databaseServerRef: ... # omitted for brevity
 ---
 apiVersion: dbman.hef.sh/v1alpha2
 kind: Database
@@ -123,10 +123,11 @@ metadata:
   name: db2
   namespace: database
 spec:
-  database_name: db2
-  database_server_ref: ... # omitted for brevity
+  databaseName: db2
   ownerRef:
     name: db1
+  databaseServerRef: ... # omitted for brevity
+  
 ```
 
 In this example both db1 and db2 will have the same owner role `common-owner`.
