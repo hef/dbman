@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.122.1](https://github.com/hef/dbman/compare/v0.122.0...v0.122.1) (2024-01-21)
+
+
+### Bug Fixes
+
+* **doc:** fix formatting in readme ([190b79d](https://github.com/hef/dbman/commit/190b79d942f8e94479c06856cbc08f53707dc3ae))
+* **doc:** fix some missed snake_case to camelCase issues ([6f588bc](https://github.com/hef/dbman/commit/6f588bcc3569ecdeada4e79a016ee5b0d7d7f387))
+* **doc:** updating docs on ownerRef and credentials ([dcda17b](https://github.com/hef/dbman/commit/dcda17b4e5cb6cbd21cf64ccdad6724e01f39e36))
+* **owner:** check for out of date owner and update ([d03de00](https://github.com/hef/dbman/commit/d03de00314d067faee2b0bc4cd49931118a93ba1))
+* **ownerRef:** don't try and overwrite owner heritage ([f60e514](https://github.com/hef/dbman/commit/f60e51450f8fc723e6b26cdb270d4c0ec8ca3939))
+
 ## [0.122.0](https://github.com/hef/dbman/compare/v0.121.8...v0.122.0) (2024-01-21)
 
 
