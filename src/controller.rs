@@ -269,9 +269,8 @@ impl v1alpha3::Database {
             } else {
                 dbc.create_database(database_name).await?;
             }
-
             dbc.apply_heritage_to_database(database_name, &heritage)
-                .await?;
+            .await?;
 
             if let Some(owner) = owner {
                 recorder
@@ -290,6 +289,23 @@ impl v1alpha3::Database {
 
                 dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
                     .await?;
+            }
+        } else if let Some(owner) = owner.clone() {
+            dbc.validate_heritage_on_database(database_name, &heritage).await?;
+            let actual_owner = dbc.get_database_owner(database_name).await?;
+            if actual_owner != owner {
+                recorder
+                    .publish(Event {
+                        type_: EventType::Normal,
+                        reason: "UpdatingOwner".into(),
+                        note: Some(format!(
+                            "Updating owner of database `{database_name}` to `{owner}`"
+                        )),
+                        action: "Updating Owner".into(),
+                        secondary: None,
+                    })
+                    .await?;
+                dbc.set_database_owner(database_name, &owner).await?;
             }
         }
 
@@ -356,7 +372,7 @@ impl v1alpha3::Database {
                 })
                 .await?;
             dbc.drop_database(database_name).await?;
-            if let Some((owner, _)) = self.get_credentials(&ctx.client, Vec::new()).await? {
+            if let Some((owner, _)) = self.get_credentials(&ctx.client).await? {
                 recorder
                     .publish(Event {
                         type_: EventType::Normal,

@@ -103,6 +103,38 @@ impl Dbc {
             .await?;
         Ok(())
     }
+
+    // get owner of database
+    pub async fn get_database_owner(&self, database: &str) -> Result<String, tokio_postgres::Error> {
+        let result = self
+            .client
+            .query(
+                "select rolname from pg_database join pg_roles on pg_database.datdba = pg_roles.oid where datname = $1::TEXT",
+                &[&database],
+            )
+            .await?;
+        Ok(result[0].get(0))
+    }
+
+    pub async fn set_database_owner(
+        &self,
+        database: &str,
+        owner: &str,
+    ) -> Result<(), tokio_postgres::Error> {
+        info!("Setting owner of database {} to {}", database, owner);
+        self.client
+            .execute(
+                &format!(
+                    "alter database {} owner to {}",
+                    escape_identifier(database),
+                    escape_identifier(owner)
+                ),
+                &[],
+            )
+            .await?;
+        Ok(())
+    }
+
     pub async fn create_database(&self, database: &str) -> Result<(), tokio_postgres::Error> {
         info!("Creating database {}", database);
         self.client
