@@ -77,7 +77,8 @@ spec:
 ```
 
 ### specifying credentials
-    Both the Database CRD and databaseServer CRD have a `credentials` field, which can be used to specify the username and password for the database and role.
+
+Both the Database CRD and databaseServer CRD have a `credentials` field, which can be used to specify the username and password for the database and role.
 
 ```yaml
   credentials:
@@ -103,6 +104,7 @@ spec:
 You can specify the owner of the database and role by setting the `ownerRef` field to another database CR.
 
 ```yaml
+---
 apiVersion: dbman.hef.sh/v1alpha2
 kind: Database
 metadata:
