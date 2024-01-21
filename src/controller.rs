@@ -3,7 +3,7 @@ use crate::{
     dbc::Dbc,
     v1alpha2::DatabaseServer,
     v1alpha3,
-    Error, Result,
+    Error, Result, credentials,
 };
 use k8s_openapi::{
     apimachinery::pkg::apis::meta::v1::{Condition, Time},
@@ -147,18 +147,17 @@ impl v1alpha3::Database {
             })?;
         Ok(dbc)
     }
-    async fn get_credentials(&self, client: &Client) -> Result<(String, String), Error> {
-        self.spec
-            .credentials
-            .as_ref()
-            .ok_or(Error::MissingCredentials(self.name_any()))?
-            .get_credentials(
-                client,
-                self.namespace()
-                    .ok_or(Error::MissingNamespace(self.name_any()))?
-                    .as_str(),
-            )
-            .await
+    async fn get_credentials(&self, client: &Client) -> Result<Option<(String, String)>, Error> {
+        if let Some(credentials) = &self.spec.credentials {
+            let namespace = self
+                .namespace()
+                .ok_or(Error::MissingNamespace(self.name_any()))?;
+
+            let pair = credentials.get_credentials(client, namespace.as_str()).await?;
+            Ok(Some(pair))
+        } else {
+            Ok(None)
+        }        
     }
 
     #[cfg(feature = "test-utils")]
