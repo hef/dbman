@@ -88,14 +88,14 @@ jobs:
           # cargo run --bin crdgen > charts/dbman/crds/crds.yaml
           cargo run --bin crdgen -- --for-helm > charts/dbman/templates/crds.yaml
       
-      - name: Push Helm chart to OCI compatible registry (Github)
+      - name: Push Helm chart to OCI compatible registry (Github)t
         uses: bsord/helm-push@v4.2.0
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.ref_type == 'tag' }}
         with:
           useOCIRegistry: true
           registry-url:  oci://ghcr.io/hef/charts
           username: ${{ github.repository }}
           access-token: ${{ secrets.GITHUB_TOKEN }}
-          force: true
+          #force: true
           chart-folder: charts/dbman
       
