@@ -2,8 +2,7 @@ use crate::{
     condition::{Reason, Status, Type},
     dbc::Dbc,
     v1alpha2::DatabaseServer,
-    v1alpha3,
-    Error, Result, credentials,
+    v1alpha3, Error, Result,
 };
 use k8s_openapi::{
     apimachinery::pkg::apis::meta::v1::{Condition, Time},
@@ -153,11 +152,13 @@ impl v1alpha3::Database {
                 .namespace()
                 .ok_or(Error::MissingNamespace(self.name_any()))?;
 
-            let pair = credentials.get_credentials(client, namespace.as_str()).await?;
+            let pair = credentials
+                .get_credentials(client, namespace.as_str())
+                .await?;
             Ok(Some(pair))
         } else {
             Ok(None)
-        }        
+        }
     }
 
     #[cfg(feature = "test-utils")]
@@ -171,33 +172,36 @@ impl v1alpha3::Database {
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         let heritage = Heritage::builder().resource(self).build();
 
-        let (owner, password) = self.get_credentials(&client).await?;
+        let mut owner: Option<String> = None;
 
-        if !dbc.does_user_exist(&owner).await? {
-            recorder
-                .publish(Event {
-                    type_: EventType::Normal,
-                    reason: "CreatingUser".into(),
-                    note: Some(format!("Creating user `{owner}`")),
-                    action: "Creating User".into(),
-                    secondary: None,
-                })
-                .await?;
-            dbc.create_user(&owner).await?;
-            dbc.apply_heritage_to_role(&owner, &heritage).await?;
-            recorder
-                .publish(Event {
-                    type_: EventType::Normal,
-                    reason: "UpdatingPassword".into(),
-                    note: Some(format!("Updating password for `{owner}`")),
-                    action: "Updating Password".into(),
-                    secondary: None,
-                })
-                .await?;
-            dbc.update_password(&owner, &password).await?;
-        } else {
-            dbc.validate_heritage_on_role(&owner, &heritage).await?;
-            dbc.update_password(&owner, &password).await?;
+        if let Some((username, password)) = self.get_credentials(&client).await? {
+            owner = Some(username.clone());
+            if !dbc.does_user_exist(&username).await? {
+                recorder
+                    .publish(Event {
+                        type_: EventType::Normal,
+                        reason: "CreatingUser".into(),
+                        note: Some(format!("Creating user `{username}`")),
+                        action: "Creating User".into(),
+                        secondary: None,
+                    })
+                    .await?;
+                dbc.create_user(&username).await?;
+                dbc.apply_heritage_to_role(&username, &heritage).await?;
+                recorder
+                    .publish(Event {
+                        type_: EventType::Normal,
+                        reason: "UpdatingPassword".into(),
+                        note: Some(format!("Updating password for `{username}`")),
+                        action: "Updating Password".into(),
+                        secondary: None,
+                    })
+                    .await?;
+                dbc.update_password(&username, &password).await?;
+            } else {
+                dbc.validate_heritage_on_role(&username, &heritage).await?;
+                dbc.update_password(&username, &password).await?;
+            }
         }
 
         let database_name = &self.spec.database_name;
@@ -211,24 +215,35 @@ impl v1alpha3::Database {
                     secondary: None,
                 })
                 .await?;
-            dbc.create_database(owner.as_ref(), database_name).await?;
+
+            if let Some(owner) = owner.clone() {
+                dbc.create_database_with_owner(database_name, &owner)
+                    .await?;
+            } else {
+                dbc.create_database(database_name).await?;
+            }
+
             dbc.apply_heritage_to_database(database_name, &heritage)
                 .await?;
-            recorder
-                .publish(Event {
-                    type_: EventType::Normal,
-                    reason: "GrantingPrivileges".into(),
-                    note: Some(format!(
-                        "Granting privileges on database `{database_name}` to `{owner}`"
-                    )),
-                    action: "Granting Privileges".into(),
-                    secondary: None,
-                })
-                .await?;
-            dbc.validate_heritage_on_database(database_name, &heritage)
-                .await?;
-            dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
-                .await?;
+
+            if let Some(owner) = owner {
+                recorder
+                    .publish(Event {
+                        type_: EventType::Normal,
+                        reason: "GrantingPrivileges".into(),
+                        note: Some(format!(
+                            "Granting privileges on database `{database_name}` to `{owner}`"
+                        )),
+                        action: "Granting Privileges".into(),
+                        secondary: None,
+                    })
+                    .await?;
+                dbc.validate_heritage_on_database(database_name, &heritage)
+                    .await?;
+
+                dbc.grant_all_privileges_on_database_to_user(database_name, &owner)
+                    .await?;
+            }
         }
 
         self.set_condition(&client, Type::Ready, Status::True, Reason::Success, "")
@@ -294,19 +309,20 @@ impl v1alpha3::Database {
                 })
                 .await?;
             dbc.drop_database(database_name).await?;
-            let (owner, _) = self.get_credentials(&ctx.client).await?;
-            recorder
-                .publish(Event {
-                    type_: EventType::Normal,
-                    reason: "DroppingUser".into(),
-                    note: Some(format!("Dropping user `{owner}`")),
-                    action: "Dropping User".into(),
-                    secondary: None,
-                })
-                .await?;
-            dbc.validate_heritage_on_role(owner.as_ref(), &heritage)
-                .await?;
-            dbc.drop_user(owner.as_ref()).await?;
+            if let Some((owner, _)) = self.get_credentials(&ctx.client).await? {
+                recorder
+                    .publish(Event {
+                        type_: EventType::Normal,
+                        reason: "DroppingUser".into(),
+                        note: Some(format!("Dropping user `{owner}`")),
+                        action: "Dropping User".into(),
+                        secondary: None,
+                    })
+                    .await?;
+                dbc.validate_heritage_on_role(owner.as_ref(), &heritage)
+                    .await?;
+                dbc.drop_user(owner.as_ref()).await?;
+            }
         }
         Ok(Action::await_change())
     }

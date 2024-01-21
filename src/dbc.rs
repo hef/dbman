@@ -85,12 +85,12 @@ impl Dbc {
         Ok(!result.is_empty())
     }
 
-    pub async fn create_database(
+    pub async fn create_database_with_owner(
         &self,
-        owner: &str,
         database: &str,
+        owner: &str,
     ) -> Result<(), tokio_postgres::Error> {
-        info!("Creating database {}", database);
+        info!("Creating database {} with owner {}", database, owner);
         self.client
             .execute(
                 &format!(
@@ -98,6 +98,16 @@ impl Dbc {
                     escape_identifier(database),
                     escape_identifier(owner)
                 ),
+                &[],
+            )
+            .await?;
+        Ok(())
+    }
+    pub async fn create_database(&self, database: &str) -> Result<(), tokio_postgres::Error> {
+        info!("Creating database {}", database);
+        self.client
+            .execute(
+                &format!("create database {}", escape_identifier(database)),
                 &[],
             )
             .await?;
