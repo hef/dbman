@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.122.0](https://github.com/hef/dbman/compare/v0.121.8...v0.122.0) (2024-01-21)
+
+
+### Features
+
+* **db:** making setting a db owner optional ([d45e589](https://github.com/hef/dbman/commit/d45e58982403ce3611f7d8ffeaa4262ce9ba888a))
+* **dbman:** enable pulling owner from other database cr ([02f0860](https://github.com/hef/dbman/commit/02f0860c3a57109c52e439c88f0fa4682dabbe71))
+
+
+### Bug Fixes
+
+* **ci:** only push helm chart on tag ([d11b42f](https://github.com/hef/dbman/commit/d11b42fb2aa09f402c437ef28f915e73c7621d4b))
+* **code:** minor code cleanup, handle all errors ([6cfbcff](https://github.com/hef/dbman/commit/6cfbcff81884e3ceb6f6b1cddeac0ed6e581091d))
+* **creds:** make missing credentials block not an error on database CR ([411b609](https://github.com/hef/dbman/commit/411b609fa48421c08150443aedf1291d26b90474))
+
 ## [0.121.8](https://github.com/hef/dbman/compare/v0.121.7...v0.121.8) (2024-01-20)
 
 
