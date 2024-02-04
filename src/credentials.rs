@@ -1,3 +1,7 @@
+use std::hash::Hash;
+use std::hash::Hasher;
+
+use k8s_openapi::Metadata;
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::Secret;
 use kube::Client;
@@ -5,6 +9,16 @@ use kube::Client;
 use crate::v1alpha3;
 use crate::Error;
 use crate::Result;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum SourceKind {
+    Secret = 0,
+    ConfigMap = 2,
+}
+
+
+
+
 
 impl v1alpha3::Credentials {
     fn validate(&self) -> Result<(), Error> {
@@ -87,9 +101,19 @@ impl v1alpha3::Credentials {
         client: &Client,
         namespace: &str,
         secret_ref: &v1alpha3::SecretRef,
+        hasher: &mut dyn Hasher,
     ) -> Result<String> {
         let api = kube::Api::<Secret>::namespaced(client.clone(), namespace);
         let secret = api.get(&secret_ref.name).await?;
+
+        //let z = SourceKind::Secret;
+        //z.hash(hasher);
+        //SourceKind::Secret.hash(hasher);
+        hasher.write(namespace.as_bytes());
+        hasher.write(secret_ref.name.as_bytes());
+        hasher.write(secret_ref.key.as_bytes());
+        // hasher.write);
+
         let byte_value = secret
             .data
             .as_ref()
@@ -130,5 +154,9 @@ impl v1alpha3::Credentials {
             ))?
             .clone();
         Ok(value)
+    }
+
+    pub fn get_modification_data() {
+
     }
 }

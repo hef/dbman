@@ -12,7 +12,7 @@ use k8s_openapi::{
 use log::{error, warn};
 use std::{
     sync::{Arc, RwLock},
-    time::Duration,
+    time::Duration, collections::HashMap,
 };
 
 use crate::heritage::Heritage;
@@ -37,9 +37,42 @@ pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 pub struct Context {
     client: Client,
     diagnostics: Arc<RwLock<Diagnostics>>,
+    modification_cache: Arc<RwLock<HashMap<String, ModificationEntry>>>,
 }
 
-impl Context {}
+struct ModificationEntry {
+    kind: String,      // database/ConfigMap/Secret
+    namespace: String,
+    name: String,
+    resource_version: i64,
+    dbs_tx_id: i64,
+}
+
+
+impl Context {
+    pub fn set_cached_txid(&self, dbs_namespace: &str, dbs_name: &str, role_name: &str, tx_id: i64, ) -> Result<()>{
+
+        let key = format!("{}_{}_{}", dbs_namespace, dbs_name, role_name);
+
+        self.modification_cache.write().map_err(|e| {
+            Error::LockError(e.to_string())
+        })?.insert(key, ModificationEntry{
+            kind: "database".to_string(),
+            namespace: dbs_namespace.to_string(),
+            name: dbs_name.to_string(),
+            resource_version: 0,
+            dbs_tx_id: tx_id,
+        });
+        Ok(())
+    }
+    pub fn get_cached_txid(&self, dbs_namespace: &str, dbs_name: &str, role_name: &str) -> Result<ModificationEntry> {
+        let key = format!("{}_{}_{}", dbs_namespace, dbs_name, role_name);
+        let tx_id = self.modification_cache.read().map_err(|e|{
+            Error::LockError(e.to_string())
+        })?.get(&key).unwrap_or(&0).clone();
+        Ok(tx_id)
+    }
+}
 
 async fn reconcile(db: Arc<v1alpha3::Database>, ctx: Arc<Context>) -> Result<Action> {
     let ns = db
@@ -128,7 +161,7 @@ impl v1alpha3::Database {
             .or(self.namespace().as_ref())
             .ok_or(Error::MissingNamespace(self.name_any()))?
             .to_owned();
-
+  
         let api: Api<DatabaseServer> = Api::namespaced(client.clone(), &database_server_namespace);
         let dbs: DatabaseServer = api.get(&self.spec.database_server_ref.name).await?;
         let (superuser_name, superuser_password) = dbs.get_credentials(client).await?;
@@ -429,6 +462,7 @@ impl State {
             diagnostics: self.diagnostics.clone(),
         })
     }
+
 }
 
 pub async fn run(state: State) -> Result<(), Error> {

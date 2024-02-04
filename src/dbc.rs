@@ -74,6 +74,17 @@ impl Dbc {
         Ok(())
     }
 
+    pub async fn get_role_txid(&self, role: &str) -> Result<u32, tokio_postgres::Error> {
+        let result = self
+            .client
+            .query(
+                "select xmin from pg_authid where rolname = $1::TEXT",
+                &[&role],
+            )
+            .await?;
+        Ok(result[0].get(0))
+    }
+
     pub async fn does_database_exist(&self, database: &str) -> Result<bool, tokio_postgres::Error> {
         let result = self
             .client
