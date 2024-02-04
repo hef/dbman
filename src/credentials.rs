@@ -1,24 +1,15 @@
-use std::hash::Hash;
 use std::hash::Hasher;
 
 use k8s_openapi::Metadata;
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::Secret;
 use kube::Client;
+use std::collections::hash_map::DefaultHasher;
+
 
 use crate::v1alpha3;
 use crate::Error;
 use crate::Result;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum SourceKind {
-    Secret = 0,
-    ConfigMap = 2,
-}
-
-
-
-
 
 impl v1alpha3::Credentials {
     fn validate(&self) -> Result<(), Error> {
@@ -46,6 +37,7 @@ impl v1alpha3::Credentials {
         &self,
         client: &Client,
         namespace: &str,
+        hasher: &mut DefaultHasher,
     ) -> Result<(String, String)> {
         self.validate()?;
         if let Some(basic_auth_secret_ref) = self.basic_auth_secret_ref.clone() {
@@ -54,28 +46,28 @@ impl v1alpha3::Credentials {
                 key: "username".into(),
             };
             let username = self
-                .get_secret_value(client, namespace, &secret_ref)
+                .get_secret_value(client, namespace, &secret_ref, hasher)
                 .await?;
             secret_ref.key = "password".into();
             let password = self
-                .get_secret_value(client, namespace, &secret_ref)
+                .get_secret_value(client, namespace, &secret_ref, hasher)
                 .await?;
             return Ok((username, password));
         }
         if let Some(username) = self.username.clone() {
             if let Some(password_secret_ref) = self.password_secret_ref.clone() {
                 let password = self
-                    .get_secret_value(client, namespace, &password_secret_ref)
+                    .get_secret_value(client, namespace, &password_secret_ref, hasher)
                     .await?;
                 return Ok((username, password));
             }
             return Err(Error::PasswordSecretRefFieldIsRequiredWhenUsernameFieldIsSet());
         }
         if let Some(username_config_ref) = self.username_config_map_ref.clone() {
-            let username = Self::get_config_value(client, namespace, &username_config_ref).await?;
+            let username = Self::get_config_value(client, namespace, &username_config_ref, hasher).await?;
             if let Some(password_secret_ref) = self.password_secret_ref.clone() {
                 let password = self
-                    .get_secret_value(client, namespace, &password_secret_ref)
+                    .get_secret_value(client, namespace, &password_secret_ref, hasher)
                     .await?;
                 return Ok((username, password));
             }
@@ -83,11 +75,11 @@ impl v1alpha3::Credentials {
         }
         if let Some(username_secret_ref) = self.username_secret_ref.clone() {
             let username = self
-                .get_secret_value(client, namespace, &username_secret_ref)
+                .get_secret_value(client, namespace, &username_secret_ref, hasher)
                 .await?;
             if let Some(password_secret_ref) = self.password_secret_ref.clone() {
                 let password = self
-                    .get_secret_value(client, namespace, &password_secret_ref)
+                    .get_secret_value(client, namespace, &password_secret_ref, hasher)
                     .await?;
                 return Ok((username, password));
             }
@@ -101,18 +93,12 @@ impl v1alpha3::Credentials {
         client: &Client,
         namespace: &str,
         secret_ref: &v1alpha3::SecretRef,
-        hasher: &mut dyn Hasher,
+        hasher: &mut DefaultHasher,
     ) -> Result<String> {
         let api = kube::Api::<Secret>::namespaced(client.clone(), namespace);
         let secret = api.get(&secret_ref.name).await?;
-
-        //let z = SourceKind::Secret;
-        //z.hash(hasher);
-        //SourceKind::Secret.hash(hasher);
-        hasher.write(namespace.as_bytes());
-        hasher.write(secret_ref.name.as_bytes());
-        hasher.write(secret_ref.key.as_bytes());
-        // hasher.write);
+        hasher.write(secret.metadata.uid.as_ref().unwrap().as_bytes());
+        hasher.write(secret.metadata().resource_version.as_ref().unwrap().as_bytes());
 
         let byte_value = secret
             .data
@@ -137,9 +123,14 @@ impl v1alpha3::Credentials {
         client: &Client,
         namespace: &str,
         config_ref: &v1alpha3::ConfigMapRef,
+        hasher: &mut DefaultHasher,
     ) -> Result<String> {
         let api = kube::Api::<ConfigMap>::namespaced(client.clone(), namespace);
         let config_map = api.get(&config_ref.name).await?;
+
+        hasher.write(config_map.metadata.uid.as_ref().unwrap().as_bytes());
+        hasher.write(config_map.metadata().resource_version.as_ref().unwrap().as_bytes());
+
         let value = config_map
             .data
             .as_ref()
@@ -154,9 +145,5 @@ impl v1alpha3::Credentials {
             ))?
             .clone();
         Ok(value)
-    }
-
-    pub fn get_modification_data() {
-
     }
 }

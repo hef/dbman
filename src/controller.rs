@@ -11,9 +11,9 @@ use k8s_openapi::{
 };
 use log::{error, warn};
 use std::{
-    sync::{Arc, RwLock},
-    time::Duration, collections::HashMap,
+    collections::{hash_map::DefaultHasher, HashMap}, hash::Hasher, sync::{Arc, RwLock}, time::Duration
 };
+
 
 use crate::heritage::Heritage;
 use futures::StreamExt;
@@ -33,45 +33,18 @@ use serde::Serialize;
 
 pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 
+
+#[derive(Debug, Clone)]
+struct ModificationEntry {
+    txid: u32,
+    hash: u64,
+}
+
 #[derive(Clone)]
 pub struct Context {
     client: Client,
     diagnostics: Arc<RwLock<Diagnostics>>,
     modification_cache: Arc<RwLock<HashMap<String, ModificationEntry>>>,
-}
-
-struct ModificationEntry {
-    kind: String,      // database/ConfigMap/Secret
-    namespace: String,
-    name: String,
-    resource_version: i64,
-    dbs_tx_id: i64,
-}
-
-
-impl Context {
-    pub fn set_cached_txid(&self, dbs_namespace: &str, dbs_name: &str, role_name: &str, tx_id: i64, ) -> Result<()>{
-
-        let key = format!("{}_{}_{}", dbs_namespace, dbs_name, role_name);
-
-        self.modification_cache.write().map_err(|e| {
-            Error::LockError(e.to_string())
-        })?.insert(key, ModificationEntry{
-            kind: "database".to_string(),
-            namespace: dbs_namespace.to_string(),
-            name: dbs_name.to_string(),
-            resource_version: 0,
-            dbs_tx_id: tx_id,
-        });
-        Ok(())
-    }
-    pub fn get_cached_txid(&self, dbs_namespace: &str, dbs_name: &str, role_name: &str) -> Result<ModificationEntry> {
-        let key = format!("{}_{}_{}", dbs_namespace, dbs_name, role_name);
-        let tx_id = self.modification_cache.read().map_err(|e|{
-            Error::LockError(e.to_string())
-        })?.get(&key).unwrap_or(&0).clone();
-        Ok(tx_id)
-    }
 }
 
 async fn reconcile(db: Arc<v1alpha3::Database>, ctx: Arc<Context>) -> Result<Action> {
@@ -112,7 +85,10 @@ async fn reconcile(db: Arc<v1alpha3::Database>, ctx: Arc<Context>) -> Result<Act
                 }
             },
             Finalizer::Cleanup(db) => match db.cleanup(ctx.clone()).await {
-                Ok(action) => Ok(action),
+                Ok(action) => {
+                    ctx.to_owned().modification_cache.write().unwrap().remove(db.metadata.uid.as_ref().unwrap());
+                    Ok(action)
+                },
                 Err(e) => {
                     let client = ctx.client.clone();
                     let recorder = ctx.diagnostics.read()?.recorder(client.clone(), &db);
@@ -164,7 +140,12 @@ impl v1alpha3::Database {
   
         let api: Api<DatabaseServer> = Api::namespaced(client.clone(), &database_server_namespace);
         let dbs: DatabaseServer = api.get(&self.spec.database_server_ref.name).await?;
-        let (superuser_name, superuser_password) = dbs.get_credentials(client).await?;
+
+
+        // todo: this hasher is not required or used
+        let hasher = &mut DefaultHasher::new();
+
+        let (superuser_name, superuser_password) = dbs.get_credentials(client, hasher).await?;
         let dbc = Dbc::new(&dbs.spec.conn_string, &superuser_name, &superuser_password)
             .await
             .map_err(|e| {
@@ -181,23 +162,28 @@ impl v1alpha3::Database {
         Ok(dbc)
     }
 
-    async fn get_credentials(&self, client: &Client,) -> Result<Option<(String, String)>, Error> {
+    async fn get_credentials(&self, client: &Client) -> Result<Option<(String, String, u64)>, Error> {
+
+        let hasher = &mut DefaultHasher::new();
+        hasher.write(self.metadata.uid.as_ref().unwrap().as_bytes());
+        hasher.write(self.metadata.resource_version.as_ref().unwrap().as_bytes());
 
         if let Some(credentials) = &self.spec.credentials {
             let namespace = self
                 .namespace()
                 .ok_or(Error::MissingNamespace(self.name_any()))?;
 
-            let pair = credentials
-                .get_credentials(client, namespace.as_str())
+            let (username, password) = credentials
+                .get_credentials(client, namespace.as_str(), hasher)
                 .await?;
-            Ok(Some(pair))
+            let hash = hasher.finish(); // todo: 64 bit hash is not enough
+            Ok(Some((username, password, hash)))
         } else {
             Ok(None)
         }
     }
 
-    #[async_recursion] // it would be nice to not copy visited, like some immutable array type or something
+    #[async_recursion] // todo: it would be nice to not copy visited, like some immutable array type or something
     async fn get_owner(
         &self,
         client: &Client,
@@ -227,9 +213,10 @@ impl v1alpha3::Database {
                 .namespace()
                 .ok_or(Error::MissingNamespace(self.name_any()))?;
 
+            let hasher = &mut DefaultHasher::new(); // todo: don't need this hasher
             let (owner, _) = credentials
                 // todo: don't get password, it might be an extra api lookup
-                .get_credentials(client, namespace.as_str())
+                .get_credentials(client, namespace.as_str(), hasher)
                 .await?;
             Ok(Some(owner))
         } else {
@@ -250,7 +237,7 @@ impl v1alpha3::Database {
 
         let mut owner: Option<String> = None;
 
-        if let Some((username, password)) = self.get_credentials(&client).await? {
+        if let Some((username, password, hash)) = self.get_credentials(&client).await? {
             owner = Some(username.clone());
             if !dbc.does_user_exist(&username).await? {
                 recorder
@@ -274,9 +261,31 @@ impl v1alpha3::Database {
                     })
                     .await?;
                 dbc.update_password(&username, &password).await?;
+                let txid = dbc.get_role_txid(&username).await?; // todo: role get txid into update_password
+                let mut cache = ctx.modification_cache.write().unwrap();
+                cache.insert(self.metadata.uid.clone().unwrap(), ModificationEntry { txid, hash });
             } else {
                 dbc.validate_heritage_on_role(&username, &heritage).await?;
-                dbc.update_password(&username, &password).await?;
+                let txid = dbc.get_role_txid(&username).await?;
+                
+                let z = {
+                    let cache = ctx.modification_cache.read().unwrap();
+                    cache.get(self.metadata.uid.as_ref().unwrap()).cloned().unwrap()
+                };
+                if z.txid != txid || z.hash != hash {
+                    recorder
+                        .publish(Event {
+                            type_: EventType::Normal,
+                            reason: "UpdatingPassword".into(),
+                            note: Some(format!("Updating password for `{username}`")),
+                            action: "Updating Password".into(),
+                            secondary: None,
+                        })
+                        .await?;
+                    dbc.update_password(&username, &password).await?;
+                    let mut cache = ctx.modification_cache.write().unwrap();
+                    cache.insert(self.metadata.uid.clone().unwrap(), ModificationEntry { txid, hash });
+                }
             }
         }
 
@@ -405,7 +414,7 @@ impl v1alpha3::Database {
                 })
                 .await?;
             dbc.drop_database(database_name).await?;
-            if let Some((owner, _)) = self.get_credentials(&ctx.client).await? {
+            if let Some((owner, _, _)) = self.get_credentials(&ctx.client).await? {
                 recorder
                     .publish(Event {
                         type_: EventType::Normal,
@@ -460,6 +469,7 @@ impl State {
         Arc::new(Context {
             client,
             diagnostics: self.diagnostics.clone(),
+            modification_cache: Arc::new(RwLock::new(HashMap::new())),
         })
     }
 
