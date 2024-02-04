@@ -1,5 +1,7 @@
 # dbman
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/dbman)](https://artifacthub.io/packages/search?repo=dbman)
+
 Create and drop databases, and an associated role for postgres in kubernetes.
 
 You will need a seperate postgres server/cluster to host the databases.
