@@ -34,8 +34,8 @@ use serde::Serialize;
 pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 
 
-#[derive(Debug, Clone)]
-struct ModificationEntry {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ModificationEntry {
     txid: u32,
     hash: u64,
 }
@@ -86,7 +86,9 @@ async fn reconcile(db: Arc<v1alpha3::Database>, ctx: Arc<Context>) -> Result<Act
             },
             Finalizer::Cleanup(db) => match db.cleanup(ctx.clone()).await {
                 Ok(action) => {
-                    ctx.to_owned().modification_cache.write().unwrap().remove(db.metadata.uid.as_ref().unwrap());
+                    if let Some(uid) = db.metadata.uid.as_ref() {
+                        ctx.to_owned().modification_cache.write()?.remove(uid);
+                    }
                     Ok(action)
                 },
                 Err(e) => {
@@ -165,8 +167,10 @@ impl v1alpha3::Database {
     async fn get_credentials(&self, client: &Client) -> Result<Option<(String, String, u64)>, Error> {
 
         let hasher = &mut DefaultHasher::new();
-        hasher.write(self.metadata.uid.as_ref().unwrap().as_bytes());
-        hasher.write(self.metadata.resource_version.as_ref().unwrap().as_bytes());
+        if let (Some(uid), Some(resource_version)) = (self.metadata.uid.as_ref(), self.metadata.resource_version.as_ref()) {
+            hasher.write(uid.as_bytes());
+            hasher.write(resource_version.as_bytes());
+        } // todo raise an error if uid or resource_version is missing
 
         if let Some(credentials) = &self.spec.credentials {
             let namespace = self
@@ -235,6 +239,13 @@ impl v1alpha3::Database {
         let recorder = ctx.diagnostics.read()?.recorder(client.clone(), self);
         let heritage = Heritage::builder().resource(self).build();
 
+        let uid = if let Some(uid) =self.metadata.uid.as_ref(){
+            uid
+        } else {
+            return Err(Error::MissingUidOrResourceVersion(self.name_any()));
+        };
+        
+
         let mut owner: Option<String> = None;
 
         if let Some((username, password, hash)) = self.get_credentials(&client).await? {
@@ -262,29 +273,31 @@ impl v1alpha3::Database {
                     .await?;
                 dbc.update_password(&username, &password).await?;
                 let txid = dbc.get_role_txid(&username).await?; // todo: role get txid into update_password
-                let mut cache = ctx.modification_cache.write().unwrap();
-                cache.insert(self.metadata.uid.clone().unwrap(), ModificationEntry { txid, hash });
+                let mut cache = ctx.modification_cache.write()?;
+                cache.insert(uid.to_owned(), ModificationEntry { txid, hash });
             } else {
                 dbc.validate_heritage_on_role(&username, &heritage).await?;
                 let txid = dbc.get_role_txid(&username).await?;
                 
                 let z = {
-                    let cache = ctx.modification_cache.read().unwrap();
-                    cache.get(self.metadata.uid.as_ref().unwrap()).cloned().unwrap()
+                    let cache = ctx.modification_cache.read()?;
+                    cache.get(uid).cloned()
                 };
-                if z.txid != txid || z.hash != hash {
-                    recorder
-                        .publish(Event {
-                            type_: EventType::Normal,
-                            reason: "UpdatingPassword".into(),
-                            note: Some(format!("Updating password for `{username}`")),
-                            action: "Updating Password".into(),
-                            secondary: None,
-                        })
-                        .await?;
-                    dbc.update_password(&username, &password).await?;
-                    let mut cache = ctx.modification_cache.write().unwrap();
-                    cache.insert(self.metadata.uid.clone().unwrap(), ModificationEntry { txid, hash });
+                if let Some(e) = z.or(Default::default()) {
+                    if (e.txid != txid && e.hash != hash) || (e.txid == 0 && e.hash == 0) { // todo: there is probably is isDefault check somewhere
+                        recorder
+                            .publish(Event {
+                                type_: EventType::Normal,
+                                reason: "UpdatingPassword".into(),
+                                note: Some(format!("Updating password for `{username}`")),
+                                action: "Updating Password".into(),
+                                secondary: None,
+                            })
+                            .await?;
+                        dbc.update_password(&username, &password).await?;
+                        let mut cache = ctx.modification_cache.write()?;
+                        cache.insert(uid.to_owned(), ModificationEntry { txid, hash });
+                    }
                 }
             }
         }

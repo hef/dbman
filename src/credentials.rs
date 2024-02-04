@@ -4,6 +4,7 @@ use k8s_openapi::Metadata;
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::Secret;
 use kube::Client;
+use kube::ResourceExt;
 use std::collections::hash_map::DefaultHasher;
 
 
@@ -97,8 +98,12 @@ impl v1alpha3::Credentials {
     ) -> Result<String> {
         let api = kube::Api::<Secret>::namespaced(client.clone(), namespace);
         let secret = api.get(&secret_ref.name).await?;
-        hasher.write(secret.metadata.uid.as_ref().unwrap().as_bytes());
-        hasher.write(secret.metadata().resource_version.as_ref().unwrap().as_bytes());
+
+        let uid = secret.metadata.uid.as_ref().ok_or(Error::MissingUidOrResourceVersion(secret.name_any()))?;
+        let resource_version = secret.metadata().resource_version.as_ref().ok_or(Error::MissingUidOrResourceVersion(secret.name_any()))?;
+
+        hasher.write(uid.as_bytes());
+        hasher.write(resource_version.as_bytes());
 
         let byte_value = secret
             .data
@@ -128,8 +133,13 @@ impl v1alpha3::Credentials {
         let api = kube::Api::<ConfigMap>::namespaced(client.clone(), namespace);
         let config_map = api.get(&config_ref.name).await?;
 
-        hasher.write(config_map.metadata.uid.as_ref().unwrap().as_bytes());
-        hasher.write(config_map.metadata().resource_version.as_ref().unwrap().as_bytes());
+        // todo: split uid and resource version missing errors
+        // todo: add name/namespace to error
+        let uid = config_map.metadata.uid.as_ref().ok_or(Error::MissingUidOrResourceVersion(config_map.name_any()))?;
+        let resource_version = config_map.metadata().resource_version.as_ref().ok_or(Error::MissingUidOrResourceVersion(config_map.name_any()))?;
+
+        hasher.write(uid.as_bytes());
+        hasher.write(resource_version.as_bytes());
 
         let value = config_map
             .data

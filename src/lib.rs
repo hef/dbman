@@ -11,7 +11,10 @@ pub mod v1alpha1;
 pub mod v1alpha2;
 pub mod v1alpha3;
 
+use std::collections::HashMap;
+use std::sync::PoisonError;
 use std::sync::RwLockReadGuard;
+use std::sync::RwLockWriteGuard;
 
 pub use crate::controller::*;
 pub use crate::v1alpha2::DatabaseServer;
@@ -102,6 +105,9 @@ pub enum Error {
 
     #[error("Owner ref has a circular dependency")]
     CircularDependency(Vec<String>),
+
+    #[error("Resource {0} is missing uid or resourceVersion")]
+    MissingUidOrResourceVersion(String),
 }
 
 impl From<kube::Error> for Error {
@@ -118,6 +124,18 @@ impl From<tokio_postgres::Error> for Error {
 
 impl From<std::sync::PoisonError<RwLockReadGuard<'_, Diagnostics>>> for Error {
     fn from(e: std::sync::PoisonError<RwLockReadGuard<Diagnostics>>) -> Self {
+        Self::LockError(e.to_string())
+    }
+}
+
+impl From<PoisonError<RwLockWriteGuard<'_, HashMap<String, ModificationEntry>>>> for Error {
+    fn from(e: PoisonError<RwLockWriteGuard<HashMap<String, ModificationEntry>>>) -> Self {
+        Self::LockError(e.to_string())
+    }
+}
+
+impl From<PoisonError<RwLockReadGuard<'_, HashMap<String, ModificationEntry>>>> for Error {
+    fn from(e: PoisonError<RwLockReadGuard<'_, HashMap<String, ModificationEntry>>>) -> Self {
         Self::LockError(e.to_string())
     }
 }
