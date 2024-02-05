@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.123.1](https://github.com/hef/dbman/compare/v0.123.0...v0.123.1) (2024-02-05)
+
+
+### Bug Fixes
+
+* **helm:** adding operator and prelease tags for artifacthub ([116512c](https://github.com/hef/dbman/commit/116512ce5b6769ea8e2c7fb3991b6254d5d30c2c))
+* **helm:** moving artifacthub metadata file ([9d99f93](https://github.com/hef/dbman/commit/9d99f93dd278bf3f78e682f9809128a9d2a51f61))
+
 ## [0.123.0](https://github.com/hef/dbman/compare/v0.122.1...v0.123.0) (2024-02-05)
 
 
