@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.123.0](https://github.com/hef/dbman/compare/v0.122.1...v0.123.0) (2024-02-05)
+
+
+### Features
+
+* **artifacthub:** adding ownership info for artifacthub ([baf4e39](https://github.com/hef/dbman/commit/baf4e396dd455e325a02e108a042876488a200f4))
+* **credentials:** detect if credentials have not changed ([052987c](https://github.com/hef/dbman/commit/052987c8b37e9ffac20d80b427b26d7585d05a3c))
+* **helm:** adding artifactub ownership info ([fde8d4e](https://github.com/hef/dbman/commit/fde8d4e81d4492686b595fe385a925044ffcb199))
+
+
+### Bug Fixes
+
+* **cache:** fix cacheing xid ([246ffd6](https://github.com/hef/dbman/commit/246ffd601cf0a924d3002415c3f9f830b94395cc))
+* **ci:** updating k8s-openapi and kube ([e50b35a](https://github.com/hef/dbman/commit/e50b35a6a597235fc3b241a78cba8905bffc3e68))
+* **cred_cache:** removing all code that can panic ([88f12ab](https://github.com/hef/dbman/commit/88f12ab9b7bc96999a8e2788357645b4df74712a))
+* **deps:** update rust crate actix-web to 4.5.1 ([75e3f7e](https://github.com/hef/dbman/commit/75e3f7e941b6d0c74d5b592847c064b351d273d8))
+* **deps:** update rust crate env_logger to 0.11.1 ([bde095a](https://github.com/hef/dbman/commit/bde095a9fa2252f7e3b7d1a0c9e2249952424162))
+* **deps:** update rust crate serde to 1.0.196 ([6ea8fe7](https://github.com/hef/dbman/commit/6ea8fe7760e1a838b238f2010844defe461f32cb))
+* **deps:** update rust crate serde_json to 1.0.112 ([e0522ae](https://github.com/hef/dbman/commit/e0522aeb4dccb269165862422c2bd1ed50f2a237))
+* **deps:** update rust crate serde_json to 1.0.113 ([d7dae00](https://github.com/hef/dbman/commit/d7dae0098536056ce0e58d4b809060332fb90ef4))
+* **deps:** update rust crate serde_yaml to 0.9.31 ([db256ae](https://github.com/hef/dbman/commit/db256ae08bcb2a00c400ec77d0268504a16c143a))
+* **doc:** adding artifacthub badge to readme ([3e3ac51](https://github.com/hef/dbman/commit/3e3ac51dd7c85538515dbc4c004ba0bf08582dad))
+
 ## [0.122.1](https://github.com/hef/dbman/compare/v0.122.0...v0.122.1) (2024-01-21)
 
 
