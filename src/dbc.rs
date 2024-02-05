@@ -74,14 +74,14 @@ impl Dbc {
         Ok(())
     }
 
-    pub async fn get_role_txid(&self, role: &str) -> Result<u32, tokio_postgres::Error> {
+    pub async fn get_role_txid(&self, role: &str) -> Result<i32, tokio_postgres::Error> {
         let result = self
             .client
             .query(
-                "select xmin from pg_authid where rolname = $1::TEXT",
+                "select xmin::text::integer from pg_authid where rolname = $1::TEXT",
                 &[&role],
             )
-            .await?;
+            .await?;       
         Ok(result[0].get(0))
     }
 

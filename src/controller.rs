@@ -36,7 +36,7 @@ pub static DATABASE_FINALIZER: &str = "databases.hef.sh/finalizer";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ModificationEntry {
-    txid: u32,
+    txid: i32,
     hash: u64,
 }
 

@@ -70,7 +70,7 @@ async fn test_recreate_deleted_db() {
 
     let db = db_api.get(dbname).await.expect("database cr exists");
     let z = db.z_reconcile(ctx.to_owned()).await;
-    assert!(z.is_ok());
+    assert!(z.is_ok(), "z_reconcile failed: {:?}", z);
 
     let exists = common::does_pgdatabase_exist(&dbc, &dbname.to_string()).await;
     assert!(exists);
