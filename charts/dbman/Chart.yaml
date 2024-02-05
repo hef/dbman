@@ -2,5 +2,8 @@ apiVersion: v2
 name: dbman
 description: A Helm chart for Kubernetes
 type: application
+annotations:
+  artifacthub.io/operator: "true"
+  artifacthub.io/prerelease: "true"
 version: 0.123.0
 appVersion: 0.123.0
