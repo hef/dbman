@@ -5,5 +5,5 @@ type: application
 annotations:
   artifacthub.io/operator: 'true'
   artifacthub.io/prerelease: 'true'
-version: 0.123.1
+version: 0.123.2
 appVersion: 0.123.1
