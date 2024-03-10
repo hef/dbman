@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.123.2](https://github.com/hef/dbman/compare/v0.123.1...v0.123.2) (2024-03-10)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate anyhow to 1.0.80 ([c67424e](https://github.com/hef/dbman/commit/c67424eae55cf2c8683581a9ab35edf340c0d06d))
+* **deps:** update rust crate clap to 4.5.0 ([0858ee9](https://github.com/hef/dbman/commit/0858ee96f706db228ea8e6ffaabc8dd8c9734c20))
+* **deps:** update rust crate clap to 4.5.1 ([85fda99](https://github.com/hef/dbman/commit/85fda99bb49d2f56100d40bfcfb10bd5ab773bbd))
+* **deps:** update rust crate clap to 4.5.2 ([a779634](https://github.com/hef/dbman/commit/a7796348824aa1afcd75b6398a6c93c2069b0b77))
+* **deps:** update rust crate env_logger to 0.11.3 ([c963d58](https://github.com/hef/dbman/commit/c963d58666742bf28e9b184c1a87b8fe2c29078f))
+* **deps:** update rust crate k8s-openapi to 0.21.1 ([0e52d94](https://github.com/hef/dbman/commit/0e52d94809c4b59af6086abad61190f5419efb29))
+* **deps:** update rust crate log to 0.4.21 ([8a27b2f](https://github.com/hef/dbman/commit/8a27b2f15ab380d4d5386b723f76cc0a144b23c3))
+* **deps:** update rust crate serde to 1.0.197 ([fb871b8](https://github.com/hef/dbman/commit/fb871b8859b92621c1ce379f0c9494bf9bcf00a0))
+* **deps:** update rust crate serde_json to 1.0.114 ([cc85eab](https://github.com/hef/dbman/commit/cc85eabbdc136e330123184ec62d3f3455d8ebc5))
+* **deps:** update rust crate serde_yaml to 0.9.32 ([ca0fa9c](https://github.com/hef/dbman/commit/ca0fa9c80d38e798cd29b69ab3dff73d38adc14c))
+* **deps:** update rust crate thiserror to 1.0.57 ([3dd43b1](https://github.com/hef/dbman/commit/3dd43b1501f60e974681ae409da148331fb7e73a))
+* Fix helm chart default env object ([56b4c74](https://github.com/hef/dbman/commit/56b4c741146b2d25a67137661eb6052014cf3fd9))
+
 ## [0.123.1](https://github.com/hef/dbman/compare/v0.123.0...v0.123.1) (2024-02-05)
 
 
