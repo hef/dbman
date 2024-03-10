@@ -1,4 +1,7 @@
-repositoryId: 15dbe94b-50c2-49be-a7a4-abfd8ca48589
+# I needed a github token (classic) with write:packages permissions
+# echo $GITHUB_PAT | oras login ghcr.io -u hef --password-stdin
+# oras push ghcr.io/hef/charts/dbman:artifacthub.io --config /dev/null:application/vnd.cncf.artifacthub.config.v1+yaml artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml
+repositoryID: 15dbe94b-50c2-49be-a7a4-abfd8ca48589
 owners:
  - name: hef
    email: hef@pbrfrat.com
