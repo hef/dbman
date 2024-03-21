@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM rust:1.76.0 AS chef
+FROM --platform=$BUILDPLATFORM rust:1.77.0 AS chef
 RUN apt-get update && apt-get install -y clang curl llvm lld musl-tools gcc-multilib g++-multilib
 #RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 #ENV PATH="/root/.cargo/bin:${PATH}"
