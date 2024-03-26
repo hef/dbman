@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.123.3](https://github.com/hef/dbman/compare/v0.123.2...v0.123.3) (2024-03-26)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate anyhow to 1.0.81 ([fe238fb](https://github.com/hef/dbman/commit/fe238fbadeffc4745033bbfad0965d9dd36a195e))
+* **deps:** update rust crate async-recursion to 1.1.0 ([c6ec9cb](https://github.com/hef/dbman/commit/c6ec9cb3d2134bec0e024cb6932c8c4aced064d5))
+* **deps:** update rust crate clap to 4.5.3 ([3391f1e](https://github.com/hef/dbman/commit/3391f1ea31c92c0f428ad77496969d3bb30031ea))
+* **deps:** update rust crate clap to 4.5.4 ([70f9610](https://github.com/hef/dbman/commit/70f96105e7a0ce90b7f54a9b80fc53dea7d66811))
+* **deps:** update rust crate serde_json to 1.0.115 ([4d3261b](https://github.com/hef/dbman/commit/4d3261b4cc4a575a384c8406a2fb24a0873164d0))
+* **deps:** update rust crate serde_yaml to 0.9.33 ([d610986](https://github.com/hef/dbman/commit/d6109866f43339e669403bad9fe9865f0cfec24b))
+* **deps:** update rust crate thiserror to 1.0.58 ([b8cad42](https://github.com/hef/dbman/commit/b8cad42484dbcaa949c948e3f28af57e6deee2ea))
+
 ## [0.123.2](https://github.com/hef/dbman/compare/v0.123.1...v0.123.2) (2024-03-10)
 
 
