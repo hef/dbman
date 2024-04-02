@@ -30,5 +30,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
+    - name: prepare test environment
+      run: cargo test test_prepare -- --exact
     - name: Run tests
       run: cargo test --verbose
