@@ -33,7 +33,7 @@ kube = { version = "0.88.1", default-features = false, features = ["runtime", "d
 log = "0.4.21"
 postgres-protocol = "0.6.6"
 schemars = "0.8.16"
-serde = { version = "1.0.197", features = ["derive", "serde_derive"] }
+serde = { version = "1.0.198", features = ["derive", "serde_derive"] }
 serde_json = "1.0.116"
 serde_yaml = "0.9.33"
 thiserror = "1.0.58"
