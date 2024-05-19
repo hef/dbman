@@ -55,8 +55,8 @@ pub(crate) struct HeritageBuilder {
 
 impl HeritageBuilder {
     pub fn resource(&mut self, db: &Database) -> &mut Self {
-        self.resource = db.metadata.name.clone();
-        self.namespace = db.metadata.namespace.clone();
+        self.resource.clone_from(&db.metadata.name);
+        self.namespace.clone_from(&db.metadata.namespace);
         self
     }
 
