@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.124.0](https://github.com/hef/dbman/compare/v0.123.2...v0.124.0) (2025-01-11)
+
+
+### Features
+
+* **version:** upgrading a bunch of versions ([8be47c3](https://github.com/hef/dbman/commit/8be47c327ca49fb1420ebe55fa3de13eeef21ff8))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate actix-web to v4.6.0 ([a79ec97](https://github.com/hef/dbman/commit/a79ec97629ba3114f827c02a70082b671b39096e))
+* **deps:** update rust crate actix-web to v4.7.0 ([3d6b716](https://github.com/hef/dbman/commit/3d6b71693510bba09fee478da5e04f622b65c0ea))
+* **deps:** update rust crate actix-web to v4.8.0 ([a4074aa](https://github.com/hef/dbman/commit/a4074aa7a80764e4cff6c0cb783ed0516efd92be))
+* **deps:** update rust crate anyhow to 1.0.81 ([fe238fb](https://github.com/hef/dbman/commit/fe238fbadeffc4745033bbfad0965d9dd36a195e))
+* **deps:** update rust crate anyhow to 1.0.82 ([0d89939](https://github.com/hef/dbman/commit/0d899399a5925277dc7fb8377bd7254ce5e170eb))
+* **deps:** update rust crate anyhow to v1.0.83 ([456952e](https://github.com/hef/dbman/commit/456952ea699332d60db93f1d2cc63e5b11e998dc))
+* **deps:** update rust crate anyhow to v1.0.85 ([80f2f08](https://github.com/hef/dbman/commit/80f2f0830ad49a8f23e16f1a1f5a3d6ac8542358))
+* **deps:** update rust crate anyhow to v1.0.86 ([0cbbcb0](https://github.com/hef/dbman/commit/0cbbcb09857b8d60d3b0169044820f31f8c65e59))
+* **deps:** update rust crate anyhow to v1.0.95 ([#212](https://github.com/hef/dbman/issues/212)) ([c7bcb98](https://github.com/hef/dbman/commit/c7bcb98270e2ba3251e43a170519662914d3df4c))
+* **deps:** update rust crate async-recursion to 1.1.0 ([c6ec9cb](https://github.com/hef/dbman/commit/c6ec9cb3d2134bec0e024cb6932c8c4aced064d5))
+* **deps:** update rust crate async-recursion to 1.1.1 ([11530d3](https://github.com/hef/dbman/commit/11530d3dd25834ae3a8b574b4e8b03b054442c09))
+* **deps:** update rust crate clap to 4.5.3 ([3391f1e](https://github.com/hef/dbman/commit/3391f1ea31c92c0f428ad77496969d3bb30031ea))
+* **deps:** update rust crate clap to 4.5.4 ([70f9610](https://github.com/hef/dbman/commit/70f96105e7a0ce90b7f54a9b80fc53dea7d66811))
+* **deps:** update rust crate clap to v4.5.10 ([597bfc8](https://github.com/hef/dbman/commit/597bfc8055006c89d443dee8d79e077c997554a8))
+* **deps:** update rust crate clap to v4.5.24 ([#216](https://github.com/hef/dbman/issues/216)) ([d8da8ad](https://github.com/hef/dbman/commit/d8da8adf939f6766551e36be908e6ab287f60560))
+* **deps:** update rust crate clap to v4.5.26 ([#220](https://github.com/hef/dbman/issues/220)) ([0f4026a](https://github.com/hef/dbman/commit/0f4026ac0204b0b551c0fac75117acd3e93058cc))
+* **deps:** update rust crate clap to v4.5.6 ([124add8](https://github.com/hef/dbman/commit/124add80e671a023a81d07c1b387e395d1531c54))
+* **deps:** update rust crate clap to v4.5.7 ([532360a](https://github.com/hef/dbman/commit/532360a6fa912e9af7c8742a074036e27dd40aae))
+* **deps:** update rust crate clap to v4.5.8 ([22b9274](https://github.com/hef/dbman/commit/22b927408b474a5217c38345e38b9dfe3b2db48a))
+* **deps:** update rust crate clap to v4.5.9 ([7d9eaff](https://github.com/hef/dbman/commit/7d9eaffa2c017bba9635597d0ded325b2916e0a4))
+* **deps:** update rust crate schemars to 0.8.17 ([e4e18cd](https://github.com/hef/dbman/commit/e4e18cd8c503636df29ae669a006d93cbc31f281))
+* **deps:** update rust crate serde to 1.0.198 ([409c5dc](https://github.com/hef/dbman/commit/409c5dcd31d33d089fd08de4112f1c77210edca8))
+* **deps:** update rust crate serde to 1.0.199 ([87cd221](https://github.com/hef/dbman/commit/87cd221d37388223d46628382959deb7f815886a))
+* **deps:** update rust crate serde to 1.0.200 ([f4bcedf](https://github.com/hef/dbman/commit/f4bcedf5837d6adf64814ce433a72670dcb61dd1))
+* **deps:** update rust crate serde to v1.0.201 ([879c917](https://github.com/hef/dbman/commit/879c9179f28c18af1acd02fc7c72ad4545c0ce17))
+* **deps:** update rust crate serde to v1.0.202 ([c3b11ff](https://github.com/hef/dbman/commit/c3b11ff9c5f1a601c47b4747d4f38ae5a1423feb))
+* **deps:** update rust crate serde to v1.0.203 ([0275035](https://github.com/hef/dbman/commit/027503531e53dff88ee0c6552b9009ee7d65b0b7))
+* **deps:** update rust crate serde to v1.0.204 ([2c84ce7](https://github.com/hef/dbman/commit/2c84ce7d62650f4f021cb62af6d522c00175c52b))
+* **deps:** update rust crate serde to v1.0.217 ([#215](https://github.com/hef/dbman/issues/215)) ([9afe6a6](https://github.com/hef/dbman/commit/9afe6a68281048be976ee7491b2d1e40ade1056b))
+* **deps:** update rust crate serde_json to 1.0.115 ([4d3261b](https://github.com/hef/dbman/commit/4d3261b4cc4a575a384c8406a2fb24a0873164d0))
+* **deps:** update rust crate serde_json to 1.0.116 ([fd79225](https://github.com/hef/dbman/commit/fd79225e1da6e37109c7c3f485f877f30e467a7a))
+* **deps:** update rust crate serde_json to v1.0.117 ([1bd47a3](https://github.com/hef/dbman/commit/1bd47a34b9f0860ce2106be6ff45b1675dc32f83))
+* **deps:** update rust crate serde_json to v1.0.118 ([326f76d](https://github.com/hef/dbman/commit/326f76da40a98251f31b835360ada6c580ee8d72))
+* **deps:** update rust crate serde_json to v1.0.119 ([9b20531](https://github.com/hef/dbman/commit/9b20531b384524ff394bb536d36f3ab02c4bd180))
+* **deps:** update rust crate serde_json to v1.0.120 ([f56d31b](https://github.com/hef/dbman/commit/f56d31b4eb3b302401087746fcfa3560ad0805fd))
+* **deps:** update rust crate serde_json to v1.0.134 ([#210](https://github.com/hef/dbman/issues/210)) ([fc34345](https://github.com/hef/dbman/commit/fc3434562fb0a1341b8521a108c9ca7713553c44))
+* **deps:** update rust crate serde_json to v1.0.135 ([#217](https://github.com/hef/dbman/issues/217)) ([b447bf7](https://github.com/hef/dbman/commit/b447bf7f99c28919edbaa89673fb6a83f7cddd05))
+* **deps:** update rust crate serde_yaml to 0.9.33 ([d610986](https://github.com/hef/dbman/commit/d6109866f43339e669403bad9fe9865f0cfec24b))
+* **deps:** update rust crate thiserror to 1.0.58 ([b8cad42](https://github.com/hef/dbman/commit/b8cad42484dbcaa949c948e3f28af57e6deee2ea))
+* **deps:** update rust crate thiserror to 1.0.59 ([0c16f5f](https://github.com/hef/dbman/commit/0c16f5fe555e21fa60e76cd3a685fd0ae009ff67))
+* **deps:** update rust crate thiserror to v1.0.60 ([d32bc7c](https://github.com/hef/dbman/commit/d32bc7cd71f34af799189dc769db099ca6da7702))
+* **deps:** update rust crate thiserror to v1.0.61 ([4d2b2f0](https://github.com/hef/dbman/commit/4d2b2f02d534b9c98a3009eac34cbd8b99af4d84))
+* **deps:** update rust crate thiserror to v1.0.62 ([ed2a4ff](https://github.com/hef/dbman/commit/ed2a4ff6575e41141e88a3cd43bf3ea0deb2c061))
+* **deps:** update rust crate thiserror to v1.0.63 ([67b0aef](https://github.com/hef/dbman/commit/67b0aef7d28a401277f00bb51ad669f285bf9634))
+* **deps:** update rust crate thiserror to v2.0.10 ([#219](https://github.com/hef/dbman/issues/219)) ([cefa88a](https://github.com/hef/dbman/commit/cefa88a5de32ca99f99f2014d8a48ab342564ba3))
+* **deps:** update rust crate thiserror to v2.0.11 ([#223](https://github.com/hef/dbman/issues/223)) ([cd5df5c](https://github.com/hef/dbman/commit/cd5df5cf83faf276eb4685958dc979c935a2b07b))
+* **deps:** update rust crate thiserror to v2.0.9 ([#211](https://github.com/hef/dbman/issues/211)) ([fa86414](https://github.com/hef/dbman/commit/fa864144786a426e9bc1748bf46e01ce84a932d1))
+* **deps:** update rust crate tokio to v1.43.0 ([#218](https://github.com/hef/dbman/issues/218)) ([01279d8](https://github.com/hef/dbman/commit/01279d8aea58c72c974cb9a569365da37580720c))
+* **heritage:** use clone_from instead of .clone() ([7754ae2](https://github.com/hef/dbman/commit/7754ae2667616bd07e3658922d8e9c1ca5e8e25e))
+* **test:** setup k8s env first ([58e8837](https://github.com/hef/dbman/commit/58e883762066c6f392c8a09106f5bb373c104b59))
+
 ## [0.123.2](https://github.com/hef/dbman/compare/v0.123.1...v0.123.2) (2024-03-10)
 
 
