@@ -32,7 +32,7 @@ k8s-openapi = { version = "0.23.0", features = ["v1_30"] }
 kube = { version = "0.97.0", default-features = false, features = ["runtime", "derive", "client", "rustls-tls", "ws"] } #todo: ws in only required in dev
 log = "0.4.21"
 postgres-protocol = "0.6.6"
-schemars = "0.8.17"
+schemars = "0.9.0"
 serde = { version = "1.0.200", features = ["derive", "serde_derive"] }
 serde_json = "1.0.116"
 serde_yaml = "0.9.33"
